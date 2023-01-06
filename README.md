@@ -30,9 +30,9 @@ A website where you can play online chess games against other users of similar s
 
 ## Technical Specifications:
 - Integration with a chess engine AI (such as Stockfish)
-- Use of a REST API
+- Use of a REST API (not decided)
 
 ## Technologies:
 - Frontend: HTML 5, SASS, vanilla JavaScript or Vue.js (or React)
-- Backend: Pure PHP or Laravel, with a MySQL database
+- Backend: Pure PHP or Laravel, MySQL
 - Real-time, full-duplex communication protocol: WebSocket or Socket.io
