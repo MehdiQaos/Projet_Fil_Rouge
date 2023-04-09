@@ -24,3 +24,7 @@ Route::get('/test', function () {
 Route::get('/game', function () {
     return view('game');
 });
+
+Route::get('/creategame', function () {
+    return view('creategame');
+});
