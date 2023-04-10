@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Exception;
-use Illuminate\Http\Request; //TODO: remove this
 use Ratchet\ConnectionInterface;
 use Ratchet\MessageComponentInterface;
 
@@ -45,7 +44,6 @@ class ChessServerController extends Controller implements MessageComponentInterf
 
     public function onMessage(ConnectionInterface $from, $msg)
     {
-        echo "new message\n";
         $msg = json_decode($msg);
         $data = $msg->data;
         switch ($msg->type) {
@@ -69,25 +67,6 @@ class ChessServerController extends Controller implements MessageComponentInterf
                 break;
             case 'join':
                 $this->handleJoin($from, $data);
-                // $gameId = $data->gameId;
-                // $game = &$this->games[$gameId]; //arrays in php lazy copy, copy-on-write
-                // $game['player2'] = $this->players[$from->resourceId];
-
-                // $game['player1']['connection']->send(json_encode([
-                //     'type' => 'gameStarted',
-                //     'data' => [
-                //         'color' => 'white',
-                //         'opponent' => $game['player2']['info'],
-                //     ],
-                // ]));
-
-                // $game['player2']['connection']->send(json_encode([
-                //     'type' => 'gameStarted',
-                //     'data' => [
-                //         'color' => 'black',
-                //         'opponent' => $game['player1']['info'],
-                //     ],
-                // ]));
                 break;
             case 'find':
                 $playerId = $data->playerId;
