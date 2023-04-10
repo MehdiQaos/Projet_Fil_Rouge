@@ -1,0 +1,40 @@
+connect: connect
+find: found
+challenge
+    offer
+    accept
+    refuse
+custom:
+    create
+    join
+    created
+    ready
+game:
+    move:
+    won
+    lost
+    take_back:
+        c -> s:
+            offer
+            accept
+            refuse
+        s -> c:
+            offered
+            accepted
+            refused
+
+    draw:
+        c -> s:
+            offer
+            accept
+            refuse
+        s -> c:
+            offered
+            accepted
+            refused
+    resign:
+        c -> s:
+            resign
+        s -> c:
+            resigned
+chat:

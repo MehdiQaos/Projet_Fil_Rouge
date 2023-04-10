@@ -38,7 +38,14 @@ conn.onopen = (e) => {
     });
 
     createGameBtn.addEventListener("click", () => {
-        sendData(conn, { type: "create", data: {} });
+        const payLoad = {
+            type: "custom",
+            data: {
+                type: "create",
+                data: {},
+            },
+        };
+        sendData(conn, payLoad);
         createGameBtn.disabled = true;
         gameCodeInput.disabled = true;
         joinGameBtn.disabled = true;
@@ -49,9 +56,12 @@ conn.onopen = (e) => {
         if (gameId === "") return;
 
         const payLoad = {
-            type: "join",
+            type: "custom",
             data: {
-                gameId,
+                type: "join",
+                data: {
+                    gameId,
+                },
             },
         };
         sendData(conn, payLoad);
@@ -71,13 +81,35 @@ function enableInputs() {
 function onMessage(e) {
     const data = JSON.parse(e.data);
     switch (data.type) {
-        case "move":
-            handleOpponentMove(data.data);
+        case "custom":
+            handleCustom(data.data);
             break;
-        case "gameCreated":
+        case "game":
+            handleGame(data.data);
+            break;
+    }
+}
+
+function handleGame(data) {
+    const type = data.type;
+    switch (type) {
+        case "move":
+            handleGameMove(data.data);
+            break;
+    }
+}
+
+function handleGameMove(data) {
+    handleOpponentMove(data);
+}
+
+function handleCustom(data) {
+    const type = data.type;
+    switch (type) {
+        case "created":
             handleGameCreated(data.data);
             break;
-        case "gameStarted":
+        case "ready":
             initGame("myBoard", data.data);
             break;
     }
@@ -91,20 +123,11 @@ function handleGameCreated(data) {
 function sendInfo(conn, info) {
     //first thing to do after the connection is established send player info (name..)
     const payLoad = {
-        type: "playerInfo",
+        type: "connect",
         data: info,
     };
 
     sendData(conn, payLoad);
-}
-
-function askServerCreateGame() {
-    const payload = {
-        type: "create",
-        data: {},
-    };
-
-    sendData(conn, payload);
 }
 
 function sendData(conn, payLoad) {
@@ -216,10 +239,13 @@ function onSnapEnd() {
 
 function makeMove(move) {
     const payLoad = {
-        type: "move",
+        type: "game",
         data: {
-            move,
-            gameId: currentGameId,
+            type: "move",
+            data: {
+                move,
+                gameId: currentGameId,
+            },
         },
     };
     conn.send(JSON.stringify(payLoad));

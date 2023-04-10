@@ -47,81 +47,149 @@ class ChessServerController extends Controller implements MessageComponentInterf
         $msg = json_decode($msg);
         $data = $msg->data;
         switch ($msg->type) {
-            case 'playerInfo':
-                $player = [
-                    'connection' => $from,
-                    'info' => $data,
-                ];
-                $this->players[$from->resourceId] = $player; //send player id to client?
+            case 'connect':
+                $this->handleConnect($from, $data);
                 break;
-            case 'create':
-                $player1 = $this->players[$from->resourceId];
-                $newGameId = $this->newGame($player1, null, true);
-                $payLoad = [
-                    'type' => 'gameCreated',
-                    'data' => [
-                        'gameId' => $newGameId,
-                    ],
-                ];
-                $from->send(json_encode($payLoad));
-                break;
-            case 'join':
-                $this->handleJoin($from, $data);
+            case 'custom':
+                $this->handleCustom($from, $data);
                 break;
             case 'find':
-                $playerId = $data->playerId;
-                if (count($this->pool) === 0)
-                    $this->pool[] = $playerId;
-                else {
-                    $player1 = $this->players[$playerId];
-                    $player2Id = array_pop($this->pool);
-                    $player2 = $this->players[$player2Id];
-                    $newGameId = $this->newGame($player1, $player2);
-                    $payLoad = [
-                        'type' => 'find',
-                        'data' => [
-                            'gameId' => $newGameId,
-                            'color' => 'white',
-                            'opponent' => $player2Id,
-                        ],
-                    ];
-                }
+                $this->handleFind($from, $data);
                 break;
-            case 'move':
-                $gameId = $data->gameId;
-                $game = $this->games[$gameId];
-                $otherPlayerConn = $game['player1']['connection']->resourceId === $from->resourceId ?
-                    $game['player2']['connection'] :
-                    $game['player1']['connection'];
-                $otherPlayerConn->send(json_encode([
-                    'type' => 'move',
-                    'data' => $data,
-                ]));
+            case 'game':
+                $this->handleGame($from, $data);
+                break;
+            case 'challenge':
+                $this->handleChallenge($from, $data);
+                break;
+            case 'chat':
+                $this->handleChat($from, $data);
                 break;
         }
     }
 
-    private function handleJoin($from, $data)
+    private function handleGame($from, $data)
+    {
+        $type = $data->type;
+        switch ($type) {
+            case 'move':
+                $this->handleGameMove($from, $data->data);
+                break;
+        }
+    }
+
+    private function handleGameMove($from, $data)
     {
         $gameId = $data->gameId;
-        $game = &$this->games[$gameId]; //arrays in php lazy copy, copy-on-write
+        $game = $this->games[$gameId];
+        $otherPlayerConn = $from->resourceId === $game['player1']['connection']->resourceId ?
+                           $game['player2']['connection'] :
+                           $game['player1']['connection'];
+        $otherPlayerConn->send(json_encode([
+            'type' => 'game',
+            'data' => [
+                'type' => 'move',
+                'data' => $data,
+            ]
+        ]));
+    }
+
+    private function handleConnect($from, $data)
+    {
+        $id = $from->resourceId;
+        $player = [
+            'connection' => $from,
+            'info' => $data,
+        ];
+        $this->players[$id] = $player;
+        $from->send(json_encode([
+            'type' => 'connect',
+            'data' => [
+                'status' => 'success',
+                'id' => $id,
+            ]
+        ]));
+    }
+
+    private function handleCustom($from, $data)
+    {
+        $type = $data->type;
+        $data = $data->data;
+
+        switch ($type) {
+            case 'create':
+                $this->handleCustomCreate($from, $data);
+                break;
+            case 'join':
+                $this->handleCustomJoin($from, $data);
+                break;
+        }
+    }
+
+    private function handleCustomJoin($from, $data)
+    {
+        $gameId = $data->gameId;
+        $game = &$this->games[$gameId]; //arrays in php are passed to functions by lazy copy, copy-on-write
         $game['player2'] = $this->players[$from->resourceId];
 
         $game['player1']['connection']->send(json_encode([
-            'type' => 'gameStarted',
+            'type' => 'custom',
             'data' => [
-                'color' => 'white',
-                'opponent' => $game['player2']['info'],
-            ],
+                'type' => 'ready',
+                'data' => [
+                    'color' => 'white',
+                    'opponent' => $game['player2']['info'],
+                ],
+            ]
         ]));
 
         $game['player2']['connection']->send(json_encode([
-            'type' => 'gameStarted',
+            'type' => 'custom',
             'data' => [
-                'color' => 'black',
-                'opponent' => $game['player1']['info'],
-            ],
+                'type' => 'ready',
+                'data' => [
+                    'color' => 'black',
+                    'opponent' => $game['player1']['info'],
+                ],
+            ]
         ]));
+    }
+
+    private function handleCustomCreate($from, $data)
+    {
+        $player1 = $this->players[$from->resourceId];
+        $newGameId = $this->newGame($player1, null, true);
+        $payLoad = [
+            'type' => 'custom',
+            'data' => [
+                'type' => 'created',
+                'data' => [
+                    'gameId' => $newGameId,
+                ],
+            ]
+        ];
+        $from->send(json_encode($payLoad));
+    }
+
+    private function handleFind($from, $data) // this just old shit not working
+    {
+        $playerId = $data->playerId;
+        if (count($this->pool) === 0)
+            $this->pool[] = $playerId;
+        else {
+            $player1 = $this->players[$playerId];
+            $player2Id = array_pop($this->pool);
+            $player2 = $this->players[$player2Id];
+            $newGameId = $this->newGame($player1, $player2);
+            $payLoad = [
+                'type' => 'find',
+                'data' => [
+                    'gameId' => $newGameId,
+                    'color' => 'white',
+                    'opponent' => $player2Id,
+                ],
+            ];
+        }
     }
 
     public function onClose(ConnectionInterface $conn)
