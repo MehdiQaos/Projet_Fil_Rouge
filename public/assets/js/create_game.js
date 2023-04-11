@@ -166,6 +166,15 @@ function setBlackTimer() {
     }, 1000);
 }
 
+function flip() {
+    board.flip();
+    temp = whiteTimerNode;
+    whiteTimerNode = blackTimerNode;
+    blackTimerNode = temp;
+    whiteTimerNode.innerText = milliToTime(timeWhite);
+    blackTimerNode.innerText = milliToTime(timeBlack);
+}
+
 function initTimersNodes() {
     whiteTimerNode = playerColor === "w" ? timer2Node : timer1Node;
     blackTimerNode = playerColor === "w" ? timer1Node : timer2Node;
@@ -189,7 +198,8 @@ function initGame(context, data) {
         onDrop: onDrop,
         onSnapEnd: onSnapEnd,
     };
-    newBoard = Chessboard(context, config);
+    board = Chessboard(context, config);
+    // newBoard = Chessboard(context, config);
 
     initTimersNodes();
     setWhiteTimer();
@@ -230,7 +240,8 @@ function toggleTimer() {
 
 function updateBoard() {
     console.log("board updated");
-    newBoard.position(game.fen());
+    board.position(game.fen());
+    // newBoard.position(game.fen());
 }
 
 function onSnapEnd() {
