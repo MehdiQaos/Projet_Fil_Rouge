@@ -17,11 +17,11 @@ game:
         c -> s:
             offer
             accept
-            refuse
+            decline
         s -> c:
             offered
             accepted
-            refused
+            declined
 
     draw:
         c -> s:

@@ -7,9 +7,6 @@ A website where you can play online chess games against other users of similar s
 - Modify account details, delete account
 - Create a game and choose the length and type (bullet, blitz, rapid, classic)
 - Search for an opponent with a similar skill level (based on ELO points)
-- Play chess puzzles
-- Play chess 960
-- Play against AI
 - Add friends and chat with them in-game
 - View game history
 
@@ -29,7 +26,6 @@ A website where you can play online chess games against other users of similar s
 - Grandmaster, Master, Diamond, Platinum, Gold, Silver, Bronze rankings based on ELO points
 
 ## Technical Specifications:
-- Integration with a chess engine AI (such as Stockfish)
 - Use of a REST API (not decided)
 
 ## Technologies:

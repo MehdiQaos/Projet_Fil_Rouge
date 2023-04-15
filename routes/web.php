@@ -28,3 +28,7 @@ Route::get('/game', function () {
 Route::get('/creategame', function () {
     return view('creategame');
 });
+
+Route::get('/piq', function () {
+    return view('piq');
+});

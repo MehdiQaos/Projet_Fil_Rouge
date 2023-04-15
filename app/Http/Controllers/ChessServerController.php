@@ -75,23 +75,47 @@ class ChessServerController extends Controller implements MessageComponentInterf
             case 'move':
                 $this->handleGameMove($from, $data->data);
                 break;
+            case 'draw':
+                $this->handleGameDraw($from, $data->data);
+                break;
+            case 'resign':
+                $this->handleGameResign($from, $data->data);
+                break;
+            case 'take_back':
+                $this->handleGameTakeBack($from, $data->data);
+                break;
         }
     }
 
-    private function handleGameMove($from, $data)
+    private function handleGameDraw($from, $data)
     {
-        $gameId = $data->gameId;
+        $this->sendToOtherPlayer($from, $data->data->gameId, [
+            'type' => 'game',
+            'data' => [
+                'type' => 'draw',
+                'data' => $data,
+            ]
+        ]);
+    }
+
+    private function sendToOtherPlayer($from, $gameId, $data)
+    {
         $game = $this->games[$gameId];
         $otherPlayerConn = $from->resourceId === $game['player1']['connection']->resourceId ?
                            $game['player2']['connection'] :
                            $game['player1']['connection'];
-        $otherPlayerConn->send(json_encode([
+        $otherPlayerConn->send(json_encode($data));
+    }
+
+    private function handleGameMove($from, $data)
+    {
+        $this->sendToOtherPlayer($from, $data->gameId, [
             'type' => 'game',
             'data' => [
                 'type' => 'move',
                 'data' => $data,
             ]
-        ]));
+        ]);
     }
 
     private function handleConnect($from, $data)

@@ -2,9 +2,25 @@ const conn = new WebSocket("ws://localhost:8090");
 const PIECETHEME = "assets/img/chesspieces/wikipedia/{piece}.png";
 
 const timeControl = 5 * 60 * 1000; // 5 minutes
-let timeWhite = timeControl;
-let timeBlack = timeControl;
-let game, playerColor, board, currentGameId, newBoard, whiteTimer, blackTimer;
+let time1 = timeControl;
+let time2 = timeControl;
+let game,
+    playerColor,
+    board,
+    currentGameId,
+    timer1Interval,
+    timer2Interval,
+    gameStatus,
+    result,
+    playing = false,
+    drawOffered = false,
+    resignOffered = false,
+    takeBackOffered = false,
+    offerDraw = false,
+    offerResign = false,
+    offerTakeBack = false;
+let player1Score = 0,
+    player2Score = 0;
 
 const connectBtn = document.getElementById("connectBtn");
 const nameInput = document.getElementById("nameInput");
@@ -12,14 +28,71 @@ const createGameBtn = document.getElementById("createGameBtn");
 const GameCode = document.getElementById("GameCode");
 const gameCodeInput = document.getElementById("gameCodeInput");
 const joinGameBtn = document.getElementById("joinGameBtn");
-const timer1Node = document.getElementById("timer1");
-const timer2Node = document.getElementById("timer2");
-let whiteTimerNode;
-let blackTimerNode;
+const player1timerNode = document.getElementById("timer1");
+const player2timerNode = document.getElementById("timer2");
+const takeBackBtn = document.getElementById("takeBackBtn");
+const offerDrawBtn = document.getElementById("drawBtn");
+const resignBtn = document.getElementById("resignBtn");
+const rematchBtn = document.getElementById("rematchBtn");
+const acceptDrawBtn = document.getElementById("acceptDrawBtn");
+const acceptTakeBAckBtn = document.getElementById("acceptTakeBAckBtn");
+const declineDrawBtn = document.getElementById("declineDrawBtn");
+const declineTakeBAckBtn = document.getElementById("declineTakeBAckBtn");
+
+const resultNode = document.getElementById("result");
 
 board = Chessboard("myBoard", {
     pieceTheme: PIECETHEME,
 });
+
+// resignBtn.addEventListener("click", f("resign", "offer"));
+
+// takeBackBtn.addEventListener("click", f("take_back", "offer"));
+// takeBackBtn.addEventListener("click", f("take_back", "accept"));
+// takeBackBtn.addEventListener("click", f("take_back", "decline"));
+
+// offerDrawBtn.addEventListener("click", f("draw", "offer"));
+// acceptDrawBtn.addEventListener("click", f("draw", "accept"));
+declineDrawBtn.addEventListener("click", () => {
+    if (drawOffered) {
+        f("draw", "decline");
+        drawOffered = false;
+    }
+});
+
+offerDrawBtn.addEventListener("click", () => {
+    if (drawOffered) {
+        f("draw", "accept");
+        setResult("Draw");
+        drawOffered = false;
+    } else if (!offerDraw) {
+        f("draw", "offer");
+        offerDraw = true;
+    }
+});
+
+acceptDrawBtn.addEventListener("click", () => {
+    if (drawOffered) {
+        f("draw", "accept");
+        setResult("Draw");
+        drawOffered = false;
+    }
+});
+
+function f(a, b) {
+    sendData(conn, {
+        type: "game",
+        data: {
+            type: a,
+            data: {
+                type: b,
+                data: {
+                    gameId: currentGameId,
+                },
+            },
+        },
+    });
+}
 
 conn.onmessage = onMessage;
 
@@ -96,11 +169,52 @@ function handleGame(data) {
         case "move":
             handleGameMove(data.data);
             break;
+        case "draw":
+            handleDraw(data.data);
+            break;
+        case "take_back":
+            handleTakeBack(data.data);
+            break;
+    }
+}
+
+function handleDraw(data) {
+    const type = data.type;
+    switch (type) {
+        case "offer":
+            handleDrawOffer(data.data);
+            break;
+        case "accept":
+            handleDrawAccept(data.data);
+            break;
+        case "decline":
+            handleDrawDecline(data.data);
+            break;
+    }
+}
+
+function handleDrawOffer(data) {
+    drawOffered = true;
+    console.log("draw offered");
+}
+
+function handleDrawAccept(data) {
+    if (offerDraw) {
+        setResult("Draw");
+        offerDraw = false;
+    }
+    // disableGameBtns();
+}
+
+function handleDrawDecline(data) {
+    if (offerDraw) {
+        offerDraw = false;
+        console.log("draw declined");
     }
 }
 
 function handleGameMove(data) {
-    handleOpponentMove(data);
+    if (playing) handleOpponentMove(data);
 }
 
 function handleCustom(data) {
@@ -148,45 +262,44 @@ function milliToTime(milli) {
     return timeText;
 }
 
-function setWhiteTimer() {
-    blackTimer = clearInterval(blackTimer);
-    clearInterval(whiteTimer);
-    whiteTimer = setInterval(() => {
-        timeWhite -= 1000;
-        whiteTimerNode.innerText = milliToTime(timeWhite);
+function setTimer1() {
+    timer2Interval = clearInterval(timer2Interval);
+    clearInterval(timer1Interval);
+    timer1Interval = setInterval(() => {
+        time1 -= 1000;
+        player1timerNode.innerText = milliToTime(time1);
     }, 1000);
 }
 
-function setBlackTimer() {
-    whiteTimer = clearInterval(whiteTimer);
-    clearInterval(blackTimer);
-    blackTimer = setInterval(() => {
-        timeBlack -= 1000;
-        blackTimerNode.innerText = milliToTime(timeBlack);
+function setTimer2() {
+    timer1Interval = clearInterval(timer1Interval);
+    clearInterval(timer2Interval);
+    timer2Interval = setInterval(() => {
+        time2 -= 1000;
+        player2timerNode.innerText = milliToTime(time2);
     }, 1000);
 }
 
-function flip() {
-    board.flip();
-    temp = whiteTimerNode;
-    whiteTimerNode = blackTimerNode;
-    blackTimerNode = temp;
-    whiteTimerNode.innerText = milliToTime(timeWhite);
-    blackTimerNode.innerText = milliToTime(timeBlack);
-}
-
-function initTimersNodes() {
-    whiteTimerNode = playerColor === "w" ? timer2Node : timer1Node;
-    blackTimerNode = playerColor === "w" ? timer1Node : timer2Node;
-    whiteTimerNode.innerText = milliToTime(timeWhite);
-    blackTimerNode.innerText = milliToTime(timeBlack);
+function initTimers() {
+    player1timerNode.innerText = milliToTime(time1);
+    player2timerNode.innerText = milliToTime(time2);
+    if (playerColor === "w") setTimer1();
+    else setTimer2();
 }
 
 function initGame(context, data) {
     board.destroy();
+    playing = true;
     game = new Chess();
-    timeWhite = timeControl;
-    timeBlack = timeControl;
+    time1 = timeControl;
+    time2 = timeControl;
+    playing = false;
+    drawOffered = false;
+    resignOffered = false;
+    takeBackOffered = false;
+    offerDraw = false;
+    offerResign = false;
+    offerTakeBack = false;
 
     playerColor = data.color === "white" ? "w" : "b"; //TODO: change to full color name
     const config = {
@@ -199,13 +312,13 @@ function initGame(context, data) {
         onSnapEnd: onSnapEnd,
     };
     board = Chessboard(context, config);
-    // newBoard = Chessboard(context, config);
 
-    initTimersNodes();
-    setWhiteTimer();
+    initTimers();
+    resultNode.display = "none";
 }
 
 function onDragStart(source, piece, position, orientation) {
+    if (!playing) return false; //TODO: handle this
     if (game.game_over()) return false;
 
     if (game.turn() !== playerColor || !isPlayerPiece(piece)) {
@@ -231,17 +344,50 @@ function onDrop(source, target) {
         makeMove(move);
         toggleTimer();
     }
+
+    handleIfGameOver();
+}
+
+function handleIfGameOver() {
+    if (game.game_over()) {
+        //TODO: handle timers
+        clearInterval(timer1Interval);
+        clearInterval(timer2Interval);
+        if (game.in_draw()) {
+            setResult("Draw");
+        } else if (game.in_checkmate()) {
+            if (game.turn() === playerColor) setResult("You Lost");
+            else setResult("You Won");
+        } else if (game.in_stalemate()) {
+            setResult("Stalemate");
+        } else if (game.in_threefold_repetition()) {
+            setResult("Draw Threefold Repetition");
+        } else if (game.insufficient_material()) {
+            setResult("Draw Insufficient Material");
+        }
+    } else if (time1 <= 0) {
+        setResult("You Lost by Time");
+    } else if (time2 <= 0) {
+        setResult("You Won by Time");
+    }
+}
+
+function setResult(r) {
+    resultNode.innerText = r;
+    resultNode.style.display = "block";
+    clearInterval(timer1Interval);
+    clearInterval(timer2Interval);
+    playing = false;
 }
 
 function toggleTimer() {
-    if (whiteTimer) setBlackTimer();
-    else setWhiteTimer();
+    if (timer1Interval) setTimer2();
+    else setTimer2();
 }
 
 function updateBoard() {
     console.log("board updated");
     board.position(game.fen());
-    // newBoard.position(game.fen());
 }
 
 function onSnapEnd() {
@@ -274,4 +420,6 @@ function handleOpponentMove(data) {
 
     updateBoard();
     toggleTimer();
+
+    handleIfGameOver();
 }
