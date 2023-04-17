@@ -13,14 +13,15 @@ let game,
     gameStatus,
     result,
     playing = false,
+    opponentOfferedDraw = false,
+    opponentOfferedResign = false,
+    opponentOfferedTakeBack = false,
     drawOffered = false,
     resignOffered = false,
     takeBackOffered = false,
-    offerDraw = false,
-    offerResign = false,
-    offerTakeBack = false;
-let player1Score = 0,
-    player2Score = 0;
+    rematchOffered = false,
+    takeBackHistory = null;
+(player1Score = 0), (player2Score = 0);
 
 const connectBtn = document.getElementById("connectBtn");
 const nameInput = document.getElementById("nameInput");
@@ -30,53 +31,125 @@ const gameCodeInput = document.getElementById("gameCodeInput");
 const joinGameBtn = document.getElementById("joinGameBtn");
 const player1timerNode = document.getElementById("timer1");
 const player2timerNode = document.getElementById("timer2");
-const takeBackBtn = document.getElementById("takeBackBtn");
+const offerTakeBackBtn = document.getElementById("takeBackBtn");
 const offerDrawBtn = document.getElementById("drawBtn");
 const resignBtn = document.getElementById("resignBtn");
-const rematchBtn = document.getElementById("rematchBtn");
+const confirmResignBtn = document.getElementById("confirmResignBtn");
+const offerRematchBtn = document.getElementById("offerRematchBtn");
 const acceptDrawBtn = document.getElementById("acceptDrawBtn");
-const acceptTakeBAckBtn = document.getElementById("acceptTakeBAckBtn");
+const acceptTakeBackBtn = document.getElementById("acceptTakeBAckBtn");
 const declineDrawBtn = document.getElementById("declineDrawBtn");
 const declineTakeBAckBtn = document.getElementById("declineTakeBAckBtn");
+const acceptRematchBtn = document.getElementById("acceptRematchBtn");
+const declineRematchBtn = document.getElementById("declineRematchBtn");
+const modalBtn = document.getElementById("modal");
+const modalTitle = document.getElementById("mymodallabel");
+const cancelModal = document.getElementById("cancelModalBtn");
+const modal = document.getElementById("mymodal");
+const modalBtns = document.querySelectorAll(".modalBtn");
+const mm = new bootstrap.Modal(modal);
+
+// hideControlButtons();
 
 const resultNode = document.getElementById("result");
+
+const showDrawOffer = () =>
+    showModal("Accept Draw?", [acceptDrawBtn, declineDrawBtn]);
+const showTakebackOffer = () =>
+    showModal("Accept take back?", [acceptTakeBackBtn, declineTakeBAckBtn]);
+const showRematchOffer = () =>
+    showModal("Opponent want rematch", [acceptRematchBtn, declineRematchBtn]);
+const showConfirmResign = () =>
+    showModal("Confirm Resign", [confirmResignBtn, cancelModal]);
+
+function showModal(title, buttons) {
+    modalTitle.innerText = title;
+    modalBtns.forEach((b) => (b.style.display = "none"));
+    buttons.forEach((b) => (b.style.display = "block"));
+    mm.show();
+}
+
+resignBtn.addEventListener("click", () =>
+    showModal("Confirm Resign", [confirmResignBtn, cancelModal])
+);
 
 board = Chessboard("myBoard", {
     pieceTheme: PIECETHEME,
 });
 
-// resignBtn.addEventListener("click", f("resign", "offer"));
+confirmResignBtn.addEventListener("click", () => {
+    if (playing) {
+        console.log("resign confirmed");
+        f("resign", "offer");
+        setResult("You Lost", 0, 1);
+    }
+});
 
-// takeBackBtn.addEventListener("click", f("take_back", "offer"));
-// takeBackBtn.addEventListener("click", f("take_back", "accept"));
-// takeBackBtn.addEventListener("click", f("take_back", "decline"));
+offerTakeBackBtn.addEventListener("click", () => {
+    if (!takeBackOffered) {
+        f("take_back", "offer");
+        takeBackOffered = true;
+        takeBackHistory = game.history;
+    }
+});
 
-// offerDrawBtn.addEventListener("click", f("draw", "offer"));
-// acceptDrawBtn.addEventListener("click", f("draw", "accept"));
+acceptTakeBackBtn.addEventListener("click", () => {
+    if (opponentOfferedTakeBack) {
+        f("take_back", "accept");
+        opponentOfferedTakeBack = false;
+        goBacktoTakeBack();
+        // handle tackback
+    }
+});
+
+declineTakeBAckBtn.addEventListener("click", () => {
+    if (opponentOfferedTakeBack) {
+        f("take_back", "decline");
+        opponentOfferedTakeBack = false;
+    }
+});
+
 declineDrawBtn.addEventListener("click", () => {
-    if (drawOffered) {
+    if (opponentOfferedDraw) {
         f("draw", "decline");
-        drawOffered = false;
+        opponentOfferedDraw = false;
     }
 });
 
 offerDrawBtn.addEventListener("click", () => {
-    if (drawOffered) {
+    if (opponentOfferedDraw) {
         f("draw", "accept");
-        setResult("Draw");
-        drawOffered = false;
-    } else if (!offerDraw) {
+        setResult("Draw", 0.5, 0.5);
+        opponentOfferedDraw = false;
+    } else if (!drawOffered) {
         f("draw", "offer");
-        offerDraw = true;
+        drawOffered = true;
     }
 });
 
 acceptDrawBtn.addEventListener("click", () => {
-    if (drawOffered) {
+    if (opponentOfferedDraw) {
         f("draw", "accept");
-        setResult("Draw");
-        drawOffered = false;
+        setResult("Draw", 0.5, 0.5);
+        opponentOfferedDraw = false;
     }
+});
+
+offerRematchBtn.addEventListener("click", () => {
+    if (!playing && !rematchOffered) {
+        f("rematch", "offer");
+        console.log("rematch offered");
+        rematchOffered = true;
+    }
+});
+
+acceptRematchBtn.addEventListener("click", () => {
+    f("rematch", "accept");
+    initGame("myBoard", { color: playerColor });
+});
+
+declineRematchBtn.addEventListener("click", () => {
+    f("rematch", "decline");
 });
 
 function f(a, b) {
@@ -175,8 +248,63 @@ function handleGame(data) {
         case "take_back":
             handleTakeBack(data.data);
             break;
+        case "resign":
+            handleOpponentResign(data.data);
+            break;
+        case "rematch":
+            handleRematchOffer(data.data);
+            break;
     }
 }
+
+function handleRematchOffer(data) {
+    const type = data.type;
+    switch (type) {
+        case "offer":
+            console.log("rematch offered");
+            if (playing) return;
+            if (rematchOffered) {
+                rematchOffered = false;
+                initGame("myBoard", { color: playerColor });
+            } else {
+                showRematchOffer();
+            }
+            break;
+        case "accept":
+            rematchOffered = false;
+            initGame("myBoard", { color: playerColor });
+            break;
+        case "decline":
+            rematchOffered = false;
+            console.log("your rematch offer was declined");
+            break;
+    }
+}
+
+function handleOpponentResign(data) {
+    console.log("opponent resigned");
+    setResult("You Won", 1, 0);
+}
+
+function handleTakeBack(data) {
+    const type = data.type;
+    switch (type) {
+        case "offer":
+            opponentOfferedTakeBack = true;
+            showTakebackOffer();
+            break;
+        case "accept":
+            handleTAkeBackAccepted(data);
+            takeBackOffered = false;
+            break;
+        case "decline":
+            console.log("your takeback offer was declined");
+            takeBackOffered = false;
+            break;
+    }
+}
+
+function handleTAkeBackAccepted(data) {}
 
 function handleDraw(data) {
     const type = data.type;
@@ -194,21 +322,21 @@ function handleDraw(data) {
 }
 
 function handleDrawOffer(data) {
-    drawOffered = true;
+    opponentOfferedDraw = true;
     console.log("draw offered");
 }
 
 function handleDrawAccept(data) {
-    if (offerDraw) {
-        setResult("Draw");
-        offerDraw = false;
+    if (drawOffered) {
+        setResult("Draw", 0.5, 0.5);
+        drawOffered = false;
     }
     // disableGameBtns();
 }
 
 function handleDrawDecline(data) {
-    if (offerDraw) {
-        offerDraw = false;
+    if (drawOffered) {
+        drawOffered = false;
         console.log("draw declined");
     }
 }
@@ -283,7 +411,7 @@ function setTimer2() {
 function initTimers() {
     player1timerNode.innerText = milliToTime(time1);
     player2timerNode.innerText = milliToTime(time2);
-    if (playerColor === "w") setTimer1();
+    if (playerColor[0] === "w") setTimer1();
     else setTimer2();
 }
 
@@ -293,15 +421,18 @@ function initGame(context, data) {
     game = new Chess();
     time1 = timeControl;
     time2 = timeControl;
-    playing = false;
+    playing = true;
+    opponentOfferedDraw = false;
+    opponentOfferedResign = false;
+    opponentOfferedTakeBack = false;
     drawOffered = false;
     resignOffered = false;
     takeBackOffered = false;
-    offerDraw = false;
-    offerResign = false;
-    offerTakeBack = false;
+    rematchOffered = false;
+    takeBackHistory = null;
 
-    playerColor = data.color === "white" ? "w" : "b"; //TODO: change to full color name
+    // playerColor = data.color === "white" ? "w" : "b"; //TODO: change to full color name
+    playerColor = data.color;
     const config = {
         orientation: data.color,
         draggable: true,
@@ -314,20 +445,31 @@ function initGame(context, data) {
     board = Chessboard(context, config);
 
     initTimers();
-    resultNode.display = "none";
+    offerRematchBtn.style.display = "none";
+    offerTakeBackBtn.style.display = "block";
+    offerDrawBtn.style.display = "block";
+    resignBtn.style.display = "block";
+    resultNode.style.display = "none";
+}
+
+function hideControlButtons() {
+    offerRematchBtn.style.display = "none";
+    offerTakeBackBtn.style.display = "none";
+    offerDrawBtn.style.display = "none";
+    resignBtn.style.display = "none";
 }
 
 function onDragStart(source, piece, position, orientation) {
     if (!playing) return false; //TODO: handle this
     if (game.game_over()) return false;
 
-    if (game.turn() !== playerColor || !isPlayerPiece(piece)) {
+    if (game.turn() !== playerColor[0] || !isPlayerPiece(piece)) {
         return false;
     }
 }
 
 function isPlayerPiece(piece) {
-    const s = "^" + playerColor;
+    const s = "^" + playerColor[0];
     return piece.search(s) !== -1;
 }
 
@@ -354,35 +496,42 @@ function handleIfGameOver() {
         clearInterval(timer1Interval);
         clearInterval(timer2Interval);
         if (game.in_draw()) {
-            setResult("Draw");
+            setResult("Draw", 0.5, 0.5);
         } else if (game.in_checkmate()) {
-            if (game.turn() === playerColor) setResult("You Lost");
-            else setResult("You Won");
+            if (game.turn() === playerColor[0]) setResult("You Lost", 0, 1);
+            else setResult("You Won", 1, 0);
         } else if (game.in_stalemate()) {
-            setResult("Stalemate");
+            setResult("Stalemate", 0.5, 0.5);
         } else if (game.in_threefold_repetition()) {
-            setResult("Draw Threefold Repetition");
+            setResult("Draw Threefold Repetition", 0.5, 0.5);
         } else if (game.insufficient_material()) {
-            setResult("Draw Insufficient Material");
+            setResult("Draw Insufficient Material", 0.5, 0.5);
         }
     } else if (time1 <= 0) {
-        setResult("You Lost by Time");
+        setResult("You Lost by Time", 0, 1);
     } else if (time2 <= 0) {
-        setResult("You Won by Time");
+        setResult("You Won by Time", 1, 0);
     }
 }
 
-function setResult(r) {
+function setResult(r, p1, p2) {
     resultNode.innerText = r;
     resultNode.style.display = "block";
+    offerRematchBtn.style.display = "block";
+    offerTakeBackBtn.style.display = "none";
+    offerDrawBtn.style.display = "none";
+    resignBtn.style.display = "none";
+
     clearInterval(timer1Interval);
     clearInterval(timer2Interval);
+    player1Score += p1;
+    player2Score += p2;
     playing = false;
 }
 
 function toggleTimer() {
     if (timer1Interval) setTimer2();
-    else setTimer2();
+    else setTimer1();
 }
 
 function updateBoard() {

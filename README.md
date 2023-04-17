@@ -25,10 +25,11 @@ A website where you can play online chess games against other users of similar s
 ## Ranking System:
 - Grandmaster, Master, Diamond, Platinum, Gold, Silver, Bronze rankings based on ELO points
 
-## Technical Specifications:
-- Use of a REST API (not decided)
-
 ## Technologies:
-- Frontend: HTML 5, SASS, vanilla JavaScript or Vue.js (or React)
-- Backend: Pure PHP or Laravel, MySQL
-- Real-time, full-duplex communication protocol: WebSocket or Socket.io
+- Frontend: HTML, CSS, BOOTSTRAP, vanilla JavaScript
+- Backend: PHP, Laravel, MySQL
+- Real-time, full-duplex communication protocol: WebSocket
+
+## Try it:
+php artisan serve
+php artisan chessserver:init (open in another terminal)

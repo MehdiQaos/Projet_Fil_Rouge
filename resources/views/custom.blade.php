@@ -31,11 +31,7 @@
                     <button id="takeBackBtn">take back</button>
                     <button id="drawBtn">draw</button>
                     <button id="resignBtn">resign</button>
-                    <button id="rematchBtn">rematch</button>
-                    <button id="acceptDrawBtn">accept Draw</button>
-                    <button id="acceptTakeBAckBtn">accept Takeback</button>
-                    <button id="declineDrawBtn">decline Draw</button>
-                    <button id="declineTakeBAckBtn">decline Takeback</button>
+                    <button id="offerRematchBtn">rematch</button>
                 </div>
             </div>
             <div class="row">
@@ -57,5 +53,26 @@
 
     <script src="{{ asset('assets/js/chess.0.10.3.js') }}"></script>
     <script src="{{ asset('assets/js/chessboard-1.0.0.js') }}"></script>
-    <script src="{{ asset('assets/js/create_game.js') }}"></script>
+    <script defer src="{{ asset('assets/js/create_game.js') }}"></script>
+    {{-- draw modal --}}
+    <div class="modal" id="mymodal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="takebackmodalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="mymodallabel">Modal title</h1>
+      </div>
+      <div class="modal-footer">
+        <button class="modalBtn" id="acceptDrawBtn" data-bs-dismiss="modal">accept</button>
+        <button class="modalBtn" id="acceptTakeBAckBtn" data-bs-dismiss="modal">accept</button>
+        <button class="modalBtn" id="declineDrawBtn" data-bs-dismiss="modal">decline</button>
+        <button class="modalBtn" id="declineTakeBAckBtn" data-bs-dismiss="modal">decline</button>
+        <button class="modalBtn" id="confirmResignBtn" data-bs-dismiss="modal">Confirm</button>
+        <button class="modalBtn" id="acceptRematchBtn" data-bs-dismiss="modal">Accept</button>
+        <button class="modalBtn" id="declineRematchBtn" data-bs-dismiss="modal">Decline</button>
+        <button class="modalBtn" id="cancelModalBtn" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+{{-- end modal --}}
 </x-menu.layout>

@@ -23,11 +23,10 @@ class Game {
         this.playerColor = playerColor;
         this.gameId = gameId;
         this.timeControl = timeControl;
-        this.board = Chessboard(context.board, boardConfig)
-        if (config.position && config.position !== 'start')
+        this.board = Chessboard(context.board, boardConfig);
+        if (config.position && config.position !== "start")
             this.engine = new Chess(config.position);
-        else 
-            this.engine = new Chess();
+        else this.engine = new Chess();
     }
 }
 
