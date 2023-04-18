@@ -90,6 +90,17 @@ class ChessServerController extends Controller implements MessageComponentInterf
         }
     }
 
+    private function handleGameTakeBack($from, $data)
+    {
+        $this->sendToOtherPlayer($from, $data->data->gameId, [
+            'type' => 'game',
+            'data' => [
+                'type' => 'take_back',
+                'data' => $data
+            ]
+        ]);
+    }
+
     private function handleGameRematch($from, $data)
     {
         $this->sendToOtherPlayer($from, $data->data->gameId, [

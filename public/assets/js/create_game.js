@@ -1,6 +1,8 @@
+// const conn = new WebSocket("ws://192.168.43.143:8090");
 const conn = new WebSocket("ws://localhost:8090");
 const PIECETHEME = "assets/img/chesspieces/wikipedia/{piece}.png";
 
+// const timeControl = 10 * 1000; // 10 seconds
 const timeControl = 5 * 60 * 1000; // 5 minutes
 let time1 = timeControl;
 let time2 = timeControl;
@@ -20,8 +22,9 @@ let game,
     resignOffered = false,
     takeBackOffered = false,
     rematchOffered = false,
-    takeBackHistory = null;
-(player1Score = 0), (player2Score = 0);
+    takeBackMoveNumber = null;
+let player1Score = 0;
+let player2Score = 0;
 
 const connectBtn = document.getElementById("connectBtn");
 const nameInput = document.getElementById("nameInput");
@@ -49,8 +52,6 @@ const modal = document.getElementById("mymodal");
 const modalBtns = document.querySelectorAll(".modalBtn");
 const mm = new bootstrap.Modal(modal);
 
-// hideControlButtons();
-
 const resultNode = document.getElementById("result");
 
 const showDrawOffer = () =>
@@ -64,8 +65,8 @@ const showConfirmResign = () =>
 
 function showModal(title, buttons) {
     modalTitle.innerText = title;
-    modalBtns.forEach((b) => (b.style.display = "none"));
-    buttons.forEach((b) => (b.style.display = "block"));
+    modalBtns.forEach((b) => (b.hidden = true));
+    buttons.forEach((b) => (b.hidden = false));
     mm.show();
 }
 
@@ -76,6 +77,7 @@ resignBtn.addEventListener("click", () =>
 board = Chessboard("myBoard", {
     pieceTheme: PIECETHEME,
 });
+window.addEventListener("resize", board.resize);
 
 confirmResignBtn.addEventListener("click", () => {
     if (playing) {
@@ -85,11 +87,38 @@ confirmResignBtn.addEventListener("click", () => {
     }
 });
 
+function playerIsWhite() {
+    return playerColor === "white";
+}
+
+function playerIsBlack() {
+    return playerColor === "black";
+}
+
 offerTakeBackBtn.addEventListener("click", () => {
     if (!takeBackOffered) {
-        f("take_back", "offer");
         takeBackOffered = true;
-        takeBackHistory = game.history;
+        if (playerIsWhite()) s = game.history().length % 2 ? 1 : 2;
+        else s = game.history().length % 2 ? 2 : 1;
+        takeBackMoveNumber = game.history().length - s;
+        if (takeBackMoveNumber >= 0) {
+            sendData(conn, {
+                type: "game",
+                data: {
+                    type: "take_back",
+                    data: {
+                        type: "offer",
+                        data: {
+                            gameId: currentGameId,
+                            takeBackMoveNumber,
+                        },
+                    },
+                },
+            });
+        } else {
+            takeBackOffered = false;
+            takeBackMoveNumber = null;
+        }
     }
 });
 
@@ -97,8 +126,8 @@ acceptTakeBackBtn.addEventListener("click", () => {
     if (opponentOfferedTakeBack) {
         f("take_back", "accept");
         opponentOfferedTakeBack = false;
-        goBacktoTakeBack();
-        // handle tackback
+        executeTakeBack();
+        // handle takeback
     }
 });
 
@@ -106,6 +135,7 @@ declineTakeBAckBtn.addEventListener("click", () => {
     if (opponentOfferedTakeBack) {
         f("take_back", "decline");
         opponentOfferedTakeBack = false;
+        takeBackMoveNumber = null;
     }
 });
 
@@ -292,19 +322,30 @@ function handleTakeBack(data) {
         case "offer":
             opponentOfferedTakeBack = true;
             showTakebackOffer();
+            takeBackMoveNumber = data.data.takeBackMoveNumber;
             break;
         case "accept":
-            handleTAkeBackAccepted(data);
+            executeTakeBack();
             takeBackOffered = false;
             break;
         case "decline":
             console.log("your takeback offer was declined");
             takeBackOffered = false;
+            takeBackMoveNumber = null;
             break;
     }
 }
 
-function handleTAkeBackAccepted(data) {}
+function executeTakeBack() {
+    let n = game.history().length - takeBackMoveNumber;
+    if (n % 2) toggleTimer();
+    while (n > 0) {
+        game.undo();
+        board.position(game.fen());
+        --n;
+    }
+    takeBackMoveNumber = null;
+}
 
 function handleDraw(data) {
     const type = data.type;
@@ -323,6 +364,7 @@ function handleDraw(data) {
 
 function handleDrawOffer(data) {
     opponentOfferedDraw = true;
+    showDrawOffer();
     console.log("draw offered");
 }
 
@@ -396,6 +438,7 @@ function setTimer1() {
     timer1Interval = setInterval(() => {
         time1 -= 1000;
         player1timerNode.innerText = milliToTime(time1);
+        if (time1 <= 0) setResult("You Lost", 0, 1);
     }, 1000);
 }
 
@@ -405,6 +448,7 @@ function setTimer2() {
     timer2Interval = setInterval(() => {
         time2 -= 1000;
         player2timerNode.innerText = milliToTime(time2);
+        if (time2 <= 0) setResult("You Won", 1, 0);
     }, 1000);
 }
 
@@ -429,7 +473,6 @@ function initGame(context, data) {
     resignOffered = false;
     takeBackOffered = false;
     rematchOffered = false;
-    takeBackHistory = null;
 
     // playerColor = data.color === "white" ? "w" : "b"; //TODO: change to full color name
     playerColor = data.color;
@@ -443,20 +486,21 @@ function initGame(context, data) {
         onSnapEnd: onSnapEnd,
     };
     board = Chessboard(context, config);
+    window.addEventListener("resize", board.resize);
 
     initTimers();
-    offerRematchBtn.style.display = "none";
-    offerTakeBackBtn.style.display = "block";
-    offerDrawBtn.style.display = "block";
-    resignBtn.style.display = "block";
-    resultNode.style.display = "none";
+    offerRematchBtn.hidden = true;
+    offerTakeBackBtn.hidden = false;
+    offerDrawBtn.hidden = false;
+    resignBtn.hidden = false;
+    resultNode.hidden = true;
 }
 
 function hideControlButtons() {
-    offerRematchBtn.style.display = "none";
-    offerTakeBackBtn.style.display = "none";
-    offerDrawBtn.style.display = "none";
-    resignBtn.style.display = "none";
+    offerRematchBtn.hidden = true;
+    offerTakeBackBtn.hidden = true;
+    offerDrawBtn.hidden = true;
+    resignBtn.hidden = true;
 }
 
 function onDragStart(source, piece, position, orientation) {
@@ -516,11 +560,11 @@ function handleIfGameOver() {
 
 function setResult(r, p1, p2) {
     resultNode.innerText = r;
-    resultNode.style.display = "block";
-    offerRematchBtn.style.display = "block";
-    offerTakeBackBtn.style.display = "none";
-    offerDrawBtn.style.display = "none";
-    resignBtn.style.display = "none";
+    resultNode.hidden = false;
+    offerRematchBtn.hidden = false;
+    offerTakeBackBtn.hidden = true;
+    offerDrawBtn.hidden = true;
+    resignBtn.hidden = true;
 
     clearInterval(timer1Interval);
     clearInterval(timer2Interval);

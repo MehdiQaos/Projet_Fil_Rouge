@@ -5,7 +5,6 @@
     {{-- @endif --}}
     <div id="page-content-wrapper">
         <x-menu.navbar/>
-        {{-- <x-menu :dishes="$dishes"/> --}}
         {{-- <div class="card p-5 m-5"> --}}
         <div class="container">
             <div class="row">
@@ -28,15 +27,15 @@
                         <textarea readonly class="form-control" placeholder="Leave a comment here" id="chatMessage"></textarea>
                         <label for="floatingTextarea">message</label>
                     </div>
-                    <button id="takeBackBtn">take back</button>
-                    <button id="drawBtn">draw</button>
-                    <button id="resignBtn">resign</button>
-                    <button id="offerRematchBtn">rematch</button>
+                    <button id="takeBackBtn" class="btn btn-secondary" hidden>take back</button>
+                    <button id="drawBtn" class="btn btn-secondary" hidden>draw</button>
+                    <button id="resignBtn" class="btn btn-secondary" hidden>resign</button>
+                    <button id="offerRematchBtn" class="btn btn-secondary" hidden>rematch</button>
                 </div>
             </div>
             <div class="row">
                 <div>
-                    <input id="nameInput" type="text">
+                    <input id="nameInput" type="text" focus>
                     <button id="connectBtn">connect</button>
                 </div>
                 <div>
