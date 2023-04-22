@@ -5,20 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Rating extends Model
+class Gamerule extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
+        'length',
+        'move_addtime_type',
+        'move_addtime',
         'gametype_id',
-        'rating',
     ];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
 
     public function gameType()
     {

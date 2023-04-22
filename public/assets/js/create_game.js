@@ -1,3 +1,4 @@
+// const conn = new WebSocket("ws://172.16.11.44:8090");
 // const conn = new WebSocket("ws://192.168.43.143:8090");
 const conn = new WebSocket("ws://localhost:8090");
 const PIECETHEME = "assets/img/chesspieces/wikipedia/{piece}.png";
@@ -97,6 +98,7 @@ function playerIsBlack() {
 
 offerTakeBackBtn.addEventListener("click", () => {
     if (!takeBackOffered) {
+        console.log("take back offer sent");
         takeBackOffered = true;
         if (playerIsWhite()) s = game.history().length % 2 ? 1 : 2;
         else s = game.history().length % 2 ? 2 : 1;
@@ -320,15 +322,18 @@ function handleTakeBack(data) {
     const type = data.type;
     switch (type) {
         case "offer":
+            console.log("takeback offered");
             opponentOfferedTakeBack = true;
             showTakebackOffer();
             takeBackMoveNumber = data.data.takeBackMoveNumber;
             break;
         case "accept":
+            console.log("takeback accepted");
             executeTakeBack();
             takeBackOffered = false;
             break;
         case "decline":
+            console.log("takeback declined");
             console.log("your takeback offer was declined");
             takeBackOffered = false;
             takeBackMoveNumber = null;

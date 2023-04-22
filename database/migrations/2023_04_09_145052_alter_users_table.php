@@ -17,7 +17,10 @@ return new class extends Migration
             $table->dropColumn('name');
             $table->string('first_name')->after('id');
             $table->string('last_name')->after('first_name');
-            $table->string('user_name')->after('first_name');
+            $table->string('user_name');
+            $table->foreignId('role_id')->constrained('roles')
+                                        ->cascadeOnDelete()
+                                        ->cascadeOnUpdate();
         });
     }
 
@@ -28,8 +31,5 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::disableForeignKeyConstraints();
-        Schema::dropIfExists('users');
-        Schema::enableForeignKeyConstraints();
     }
 };

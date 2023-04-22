@@ -18,7 +18,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('white_player_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('black_player_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('gametype_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('gamerule_id')->nullable()->constrained('gamerules')->nullOnDelete();
             $table->string('result'); // 1-0, 0-1, 1/2-1/2
             $table->longText('pgn');
             $table->date('date');

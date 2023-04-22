@@ -12,7 +12,7 @@ class Game extends Model
     protected $fillable = [
         'white_player_id',
         'black_player_id',
-        'gametype_id',
+        'gamerule_id',
         'result',
         'pgn',
         'date',
@@ -28,8 +28,33 @@ class Game extends Model
         return $this->belongsTo(User::class, 'black_player_id');
     }
 
+    public function winner()
+    {
+        if ($this->result === '1-0')
+            return $this->white_player();
+        else if ($this->result === '0-1')
+            return $this->black_player();
+        else
+            return null;
+    }
+
+    public function winnerColor()
+    {
+        if ($this->result === '1-0')
+            return 'WHITE';
+        else if ($this->result === '0-1')
+            return 'BLACK';
+        else
+            return null;
+    }
+
+    public function gameRule()
+    {
+        return $this->belongsTo(Gamerule::class, 'gamerule_id');
+    }
+
     public function gametype()
     {
-        return $this->belongsTo(Gametype::class);
+        return $this->gameRule()->gameType();
     }
 }

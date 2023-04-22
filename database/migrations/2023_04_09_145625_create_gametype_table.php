@@ -15,10 +15,7 @@ return new class extends Migration
     {
         Schema::create('gametypes', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->integer('length');
-            $table->string('move_addtime_type'); // increment, delay, none
-            $table->integer('move_addtime'); // seconds
+            $table->string('name'); // classic, rapid, blitz, bullet
             $table->timestamps();
         });
     }

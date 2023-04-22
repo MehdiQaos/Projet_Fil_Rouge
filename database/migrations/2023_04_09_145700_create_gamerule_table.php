@@ -13,12 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        // elo rating of players
-        Schema::create('ratings', function (Blueprint $table) {
+        Schema::create('gamerules', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('gametype_id')->constrained()->cascadeOnDelete();
-            $table->integer('rating')->default(500);
+            $table->integer('length');
+            $table->string('move_addtime_type'); // increment, delay, none
+            $table->integer('move_addtime'); // seconds
+            $table->foreignId('gametype_id')->constrained('gametypes')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -30,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('ratings');
+        Schema::dropIfExists('gamerules');
     }
 };

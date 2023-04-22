@@ -9,8 +9,11 @@ use Ratchet\MessageComponentInterface;
 class ChessServerController extends Controller implements MessageComponentInterface
 {
     protected $connections;
+
     private $players;
+
     private $games;
+
     private $pool;
 
     public function __construct()
@@ -39,6 +42,7 @@ class ChessServerController extends Controller implements MessageComponentInterf
             'status' => 'waiting',
         ];
         $this->games[$gameId] = $game;
+
         return $gameId;
     }
 
@@ -96,8 +100,8 @@ class ChessServerController extends Controller implements MessageComponentInterf
             'type' => 'game',
             'data' => [
                 'type' => 'take_back',
-                'data' => $data
-            ]
+                'data' => $data,
+            ],
         ]);
     }
 
@@ -107,8 +111,8 @@ class ChessServerController extends Controller implements MessageComponentInterf
             'type' => 'game',
             'data' => [
                 'type' => 'rematch',
-                'data' => $data
-            ]
+                'data' => $data,
+            ],
         ]);
     }
 
@@ -118,8 +122,8 @@ class ChessServerController extends Controller implements MessageComponentInterf
             'type' => 'game',
             'data' => [
                 'type' => 'resign',
-                'data' => []
-            ]
+                'data' => [],
+            ],
         ]);
     }
 
@@ -130,7 +134,7 @@ class ChessServerController extends Controller implements MessageComponentInterf
             'data' => [
                 'type' => 'draw',
                 'data' => $data,
-            ]
+            ],
         ]);
     }
 
@@ -150,7 +154,7 @@ class ChessServerController extends Controller implements MessageComponentInterf
             'data' => [
                 'type' => 'move',
                 'data' => $data,
-            ]
+            ],
         ]);
     }
 
@@ -167,7 +171,7 @@ class ChessServerController extends Controller implements MessageComponentInterf
             'data' => [
                 'status' => 'success',
                 'id' => $id,
-            ]
+            ],
         ]));
     }
 
@@ -200,7 +204,7 @@ class ChessServerController extends Controller implements MessageComponentInterf
                     'color' => 'white',
                     'opponent' => $game['player2']['info'],
                 ],
-            ]
+            ],
         ]));
 
         $game['player2']['connection']->send(json_encode([
@@ -211,7 +215,7 @@ class ChessServerController extends Controller implements MessageComponentInterf
                     'color' => 'black',
                     'opponent' => $game['player1']['info'],
                 ],
-            ]
+            ],
         ]));
     }
 
@@ -226,7 +230,7 @@ class ChessServerController extends Controller implements MessageComponentInterf
                 'data' => [
                     'gameId' => $newGameId,
                 ],
-            ]
+            ],
         ];
         $from->send(json_encode($payLoad));
     }
@@ -234,9 +238,9 @@ class ChessServerController extends Controller implements MessageComponentInterf
     private function handleFind($from, $data) // this just old shit not working
     {
         $playerId = $data->playerId;
-        if (count($this->pool) === 0)
+        if (count($this->pool) === 0) {
             $this->pool[] = $playerId;
-        else {
+        } else {
             $player1 = $this->players[$playerId];
             $player2Id = array_pop($this->pool);
             $player2 = $this->players[$player2Id];

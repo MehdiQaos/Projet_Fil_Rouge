@@ -32,3 +32,7 @@ Route::get('/creategame', function () {
 Route::get('/custom', function () {
     return view('custom');
 });
+
+Route::get('/pgn', function () {
+    return view('pgnview');
+});
