@@ -14,8 +14,8 @@
     {{-- <script src="https://code.jquery.com/jquery-1.12.4.js"></script> --}}
     <link rel="stylesheet" href="{{ asset('assets/css/font-awesome.all.min.css') }}">
     <script src="{{ asset('assets/js/jquery-1.12.4.js') }}"></script>
+    <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     <script defer src="/script.js"></script>
-    <link rel="stylesheet" href="/style.css">
     <title>MyChess</title>
 </head>
 

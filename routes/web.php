@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,24 +17,19 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('custom');
-});
-
-Route::get('/test', function () {
-    return view('test');
-});
-
-Route::get('/game', function () {
-    return view('game');
-});
-
-Route::get('/creategame', function () {
-    return view('creategame');
-});
+})->name('home')->middleware('auth');
 
 Route::get('/custom', function () {
     return view('custom');
-});
+})->middleware('auth');
 
 Route::get('/pgn', function () {
     return view('pgnview');
-});
+})->middleware('auth');
+
+// auth
+Route::get('/login', [UserController::class, 'login'])->name('login')->middleware('guest');
+Route::get('/register', [UserController::class, 'create'])->middleware('guest');
+Route::post('/users', [AuthController::class, 'store']);
+Route::get('/logout', [AuthController::class, 'logout'])->middleware('auth');
+Route::post('/users/authenticate', [AuthController::class, 'authenticate']);
