@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Models\Game;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -25,6 +26,20 @@ Route::get('/custom', function () {
 
 Route::get('/pgn', function () {
     return view('pgnview');
+})->middleware('auth');
+
+Route::get('/games', function () {
+    return view('mygames');
+})->middleware('auth');
+
+Route::get('/games/{game}', function(Game $game) {
+    return view('mygame', [
+        'game' => $game,
+    ]);
+});
+
+Route::get('/find', function(Game $game) {
+    return view('find');
 })->middleware('auth');
 
 // auth

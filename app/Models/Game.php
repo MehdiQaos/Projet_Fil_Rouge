@@ -55,6 +55,7 @@ class Game extends Model
 
     public function gametype()
     {
-        return $this->gameRule()->gameType();
+        return $this->gameRule->gameType->name;
+        // return $this->hasOneThrough(gametype::class, Gamerule::class, );
     }
 }

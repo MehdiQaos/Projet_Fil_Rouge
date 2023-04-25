@@ -19,12 +19,12 @@
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle second-text fw-bold" href="#" id="navbarDropdown"
                     role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-user me-2"></i>
-                    {{-- @auth
-                        {{auth()->user()->firstname}}
+                    @auth
+                        {{auth()->user()->user_name}}
                     @else
                         Guest
-                    @endauth --}}
-                    piq
+                    @endauth
+                    {{-- piq --}}
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                     {{-- <li><a class="dropdown-item" href="/users/{{auth()->id()}}/edit">Profile</a></li> --}}

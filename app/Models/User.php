@@ -58,4 +58,24 @@ class User extends Authenticatable
     public function ratings() {
         return $this->hasMany(Rating::class);
     }
+
+    public function whiteGames()
+    {
+        return $this->hasMany(Game::class, 'white_player_id');
+    }
+
+    public function latestWhiteGames()
+    {
+        return $this->hasOne(Game::class, 'white_player_id')->latestOfMany();
+    }
+
+    public function blackGames()
+    {
+        return $this->hasMany(Game::class, 'black_player_id');
+    }
+
+    public function games()
+    {
+        return $this->whiteGames->merge($this->blackGames);
+    }
 }
