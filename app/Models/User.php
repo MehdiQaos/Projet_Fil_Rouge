@@ -50,13 +50,13 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
-    public function roleName()
-    {
-        return $this->role()->roleName();
-    }
-
     public function ratings() {
         return $this->hasMany(Rating::class);
+    }
+
+    public function rating($gameTypeId)
+    {
+        return $this->ratings->where('gametype_id', $gameTypeId)->first()->rating;
     }
 
     public function whiteGames()
@@ -64,10 +64,15 @@ class User extends Authenticatable
         return $this->hasMany(Game::class, 'white_player_id');
     }
 
-    public function latestWhiteGames()
-    {
-        return $this->hasOne(Game::class, 'white_player_id')->latestOfMany();
-    }
+    // public function latestWhiteGames()
+    // {
+    //     return $this->hasOne(Game::class, 'white_player_id')->latestOfMany();
+    // }
+
+    // public function latestBlackGames()
+    // {
+    //     return $this->hasOne(Game::class, 'black_player_id')->latestOfMany();
+    // }
 
     public function blackGames()
     {
@@ -77,5 +82,10 @@ class User extends Authenticatable
     public function games()
     {
         return $this->whiteGames->merge($this->blackGames);
+    }
+
+    public function fullName()
+    {
+        return $this->first_name . ' ' . $this->last_name;
     }
 }

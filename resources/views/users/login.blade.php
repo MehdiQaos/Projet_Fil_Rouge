@@ -18,11 +18,16 @@
             <form  method="POST" action="/users/authenticate" class="container">
                 @csrf
                 <div class="row form-outline my-3">
-                    <input type="text" id="email_input" class="form-control" placeholder="Email" name="email"/>
+                    <input type="text" id="email_input" class="form-control" placeholder="Email" name="email" value="{{old('email')}}"/>
                 </div>
                 <div class="row form-outline my-3">
                     <input type="password" id="password_input" class="form-control" placeholder="Password" name="password"/>
+                    @error('email')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
                 </div>
+                <div class="text-center fw-medium">Don't have an account? <a class="text-black" href="/register"><span class="fw-semibold">Sign up</span></a></div>
+                
                 <div class="row text-center d-flex justify-content-center">
                     <button type="submit" id="login-button" class="btn p-2 my-0 mt-4 w-25" name="login"><span class="text-light fw-bold">Sign In</span></button>
                 </div>

@@ -3,6 +3,12 @@
     <div id="page-content-wrapper">
     <x-menu.navbar/>
     <div class="container">
+        @php
+            $games = auth()->user()->games();
+        @endphp
+        @if (count($games) == 0)
+            <h1>no games</h1>
+        @else
         <table class="table">
             <thead>
                 <tr>
@@ -15,7 +21,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (auth()->user()->games() as $game)
+                @foreach ($games as $game)
                     <tr>
                         <th scope="row">{{ $loop->iteration }}</th>
                         <td> {{ $game->white_player->user_name }} </td>
@@ -27,6 +33,7 @@
                 @endforeach
             </tbody>
         </table>
+        @endif
     </div>
     </div>
 </x-menu.layout>

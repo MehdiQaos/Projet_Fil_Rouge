@@ -27,10 +27,13 @@ let game,
 let player1Score = 0;
 let player2Score = 0;
 
+const gameSection = document.getElementById("game-section");
+const createGameSection = document.getElementById("create-game-section");
+const findGameSection = document.getElementById("find-game-section");
 const connectBtn = document.getElementById("connectBtn");
 const nameInput = document.getElementById("nameInput");
 const createGameBtn = document.getElementById("createGameBtn");
-const GameCode = document.getElementById("GameCode");
+const gameCode = document.getElementById("gameCode");
 const gameCodeInput = document.getElementById("gameCodeInput");
 const joinGameBtn = document.getElementById("joinGameBtn");
 const player1timerNode = document.getElementById("timer1");
@@ -54,6 +57,72 @@ const modalBtns = document.querySelectorAll(".modalBtn");
 const mm = new bootstrap.Modal(modal);
 
 const resultNode = document.getElementById("result");
+
+// if (pageType === "custom") showCreateGameSection();
+// else if (pageType === "find") showFindGameSection();
+showControlBtns();
+
+function showGameSection() {
+    createGameSection.hidden = true;
+    findGameSection.hidden = true;
+    gameSection.hidden = false;
+}
+
+function showCreateGameSection() {
+    createGameSection.hidden = false;
+    findGameSection.hidden = true;
+    gameSection.hidden = true;
+}
+
+function showFindGameSection() {
+    createGameSection.hidden = true;
+    findGameSection.hidden = false;
+    gameSection.hidden = true;
+}
+
+function findGame(gameRuleId) {
+    const payload = {
+        type: "find",
+        data: {
+            type: "new",
+            data: {
+                userId,
+                gameRuleId,
+            },
+        },
+    };
+    conn.send(JSON.stringify(payload));
+    // console.log(gameRuleId);
+    // console.log(userId);
+}
+
+function cancelFind() {
+    const payload = {
+        type: "find",
+        data: {
+            type: "cancel",
+            data: {
+                id: userId,
+                gameRuleId,
+            },
+        },
+    };
+    conn.send(JSON.stringify(payload));
+}
+
+function showControlBtns() {
+    offerTakeBackBtn.hidden = false;
+    offerDrawBtn.hidden = false;
+    resignBtn.hidden = false;
+    offerRematchBtn.hidden = false;
+}
+
+function hideControlBtns() {
+    offerTakeBackBtn.hidden = true;
+    offerDrawBtn.hidden = true;
+    resignBtn.hidden = true;
+    offerRematchBtn.hidden = true;
+}
 
 const showDrawOffer = () =>
     showModal("Accept Draw?", [acceptDrawBtn, declineDrawBtn]);
@@ -204,50 +273,57 @@ conn.onmessage = onMessage;
 conn.onopen = (e) => {
     console.log("conncection established");
 
-    connectBtn.addEventListener("click", () => {
-        if (nameInput.value === "") return;
-
-        console.log("connect btn clicked");
-        sendInfo(conn, { name: nameInput.value });
-        connectBtn.disabled = true;
-        nameInput.disabled = true;
-
-        enableInputs();
+    sendInfo(conn, {
+        registred: true,
+        userId,
     });
 
-    createGameBtn.addEventListener("click", () => {
-        const payLoad = {
-            type: "custom",
-            data: {
-                type: "create",
-                data: {},
-            },
-        };
-        sendData(conn, payLoad);
-        createGameBtn.disabled = true;
-        gameCodeInput.disabled = true;
-        joinGameBtn.disabled = true;
-    });
+    // connectBtn.addEventListener("click", () => {
+    //     if (nameInput.value === "") return;
 
-    joinGameBtn.addEventListener("click", () => {
-        const gameId = gameCodeInput.value;
-        if (gameId === "") return;
+    //     console.log("connect btn clicked");
+    //     sendInfo(conn, { name: nameInput.value });
+    //     connectBtn.disabled = true; // TODO: handle this mess
+    //     nameInput.disabled = true;
 
-        const payLoad = {
-            type: "custom",
-            data: {
-                type: "join",
+    //     enableInputs();
+    // });
+
+    // createGameBtn.addEventListener("click", () => {
+    //     const payLoad = {
+    //         type: "custom",
+    //         data: {
+    //             type: "create",
+    //             data: {},
+    //         },
+    //     };
+    //     sendData(conn, payLoad);
+    //     createGameBtn.disabled = true;
+    //     gameCodeInput.disabled = true;
+    //     joinGameBtn.disabled = true;
+    // });
+
+    if (pageType === "custom") {
+        joinGameBtn.addEventListener("click", () => {
+            const gameId = gameCodeInput.value;
+            if (gameId === "") return;
+
+            const payLoad = {
+                type: "custom",
                 data: {
-                    gameId,
+                    type: "join",
+                    data: {
+                        gameId,
+                    },
                 },
-            },
-        };
-        sendData(conn, payLoad);
-        createGameBtn.disabled = true;
-        gameCodeInput.disabled = true;
-        joinGameBtn.disabled = true;
-        currentGameId = gameId;
-    });
+            };
+            sendData(conn, payLoad);
+            createGameBtn.disabled = true;
+            gameCodeInput.disabled = true;
+            joinGameBtn.disabled = true;
+            currentGameId = gameId;
+        });
+    }
 };
 
 function enableInputs() {
@@ -406,7 +482,8 @@ function handleCustom(data) {
 
 function handleGameCreated(data) {
     currentGameId = data.gameId;
-    GameCode.innerText = currentGameId;
+    gameCode.value = currentGameId;
+    // gameCode.innerText = currentGameId;
 }
 
 function sendInfo(conn, info) {
@@ -499,6 +576,8 @@ function initGame(context, data) {
     offerDrawBtn.hidden = false;
     resignBtn.hidden = false;
     resultNode.hidden = true;
+
+    showGameSection();
 }
 
 function hideControlButtons() {

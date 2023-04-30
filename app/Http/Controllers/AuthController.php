@@ -62,7 +62,6 @@ class AuthController extends Controller
     // Authenticate User
     public function authenticate(Request $request)
     {
-        // ddd($request);
         $formFields = $request->validate([
             'email' => ['required', 'email'],
             'password' => 'required',

@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Gamerule;
+use App\Models\Gametype;
+use App\Models\User;
 use Exception;
 use Ratchet\ConnectionInterface;
 use Ratchet\MessageComponentInterface;
@@ -9,21 +12,35 @@ use Ratchet\MessageComponentInterface;
 class ChessServerController extends Controller implements MessageComponentInterface
 {
     protected $connections;
-
     private $players;
-
     private $games;
-
-    private $pool;
+    private $rankedPools;
+    private $guestsPools;
+    private $gameRules;
 
     public function __construct()
     {
+        $this->gameRules = Gamerule::all();
         $this->connections = new \SplObjectStorage;
         $this->players = [];
         $this->games = [];
-        $this->pool = [];
+        $this->rankedPools = [];
+        foreach ($this->gameRules as $gameRule) {
+            $this->rankedPools[$gameRule->id] = [];
+        }
+        $this->guestsPools = [];
+        foreach ($this->gameRules as $gameRule) {
+            $this->guestsPools[$gameRule->id] = [];
+        }
+
+        // for ($i = 0; $i < count($this->gameRules); $i++) {
+        //     $this->pools[]
+        // }
+        // $this->pools = [];
 
         echo "listening on port 8090..\n";
+        echo "ranked pools count: " . count($this->rankedPools) . "\n";
+        echo "guests pools count: " . count($this->guestsPools) . "\n";
     }
 
     public function onOpen(ConnectionInterface $conn)
@@ -32,14 +49,15 @@ class ChessServerController extends Controller implements MessageComponentInterf
         $this->connections->attach($conn);
     }
 
-    private function newGame($player1 = null, $player2 = null, $private = false)
+    private function newGame($player1 = null, $player2 = null, $ranked)
     {
         $gameId = uniqid('game_');
         $game = [
             'player1' => $player1,
             'player2' => $player2,
-            'private' => $private,
-            'status' => 'waiting',
+            'player1score' => 0,
+            'player2score' => 0,
+            'ranked' => $ranked,
         ];
         $this->games[$gameId] = $game;
 
@@ -237,23 +255,62 @@ class ChessServerController extends Controller implements MessageComponentInterf
 
     private function handleFind($from, $data) // this just old shit not working
     {
-        $playerId = $data->playerId;
-        if (count($this->pool) === 0) {
-            $this->pool[] = $playerId;
-        } else {
-            $player1 = $this->players[$playerId];
-            $player2Id = array_pop($this->pool);
-            $player2 = $this->players[$player2Id];
-            $newGameId = $this->newGame($player1, $player2);
-            $payLoad = [
-                'type' => 'find',
-                'data' => [
-                    'gameId' => $newGameId,
-                    'color' => 'white',
-                    'opponent' => $player2Id,
-                ],
-            ];
+        $type = $data->type;
+        switch ($type) {
+            case 'new':
+                $this->handleFindNew($from, $data->data);
+                break;
+            case 'cancel':
+                $this->handleFindCancel($from, $data->data);
+                break;
         }
+        // $playerId = $data->playerId;
+        // if (count($this->pool) === 0) {
+        //     $this->pool[] = $playerId;
+        // } else {
+        //     $player1 = $this->players[$playerId];
+        //     $player2Id = array_pop($this->pool);
+        //     $player2 = $this->players[$player2Id];
+        //     $newGameId = $this->newGame($player1, $player2);
+        //     $payLoad = [
+        //         'type' => 'find',
+        //         'data' => [
+        //             'gameId' => $newGameId,
+        //             'color' => 'white',
+        //             'opponent' => $player2Id,
+        //         ],
+        //     ];
+        // }
+    }
+
+    public function handleFindNew($from, $data)
+    {
+        $diff = 50;
+        $userId = $data->userId;
+        $gameRuleId = $data->gameRuleId;
+        $pool = &$this->rankedPools[$gameRuleId];
+        $gametypeId = Gamerule::find($gameRuleId)->gameType->id;
+        $rating = User::find($userId)->rating($gametypeId);
+        $pool[$userId] = $rating;
+        foreach ($pool as $id => $r) {
+            if (abs($rating - $r) <= $diff) {
+
+            }
+        }
+        // if (!array_key_exists($userId, $pool)) {
+        //     echo "nope\n";
+        //     return;
+        // }
+        echo "pool count: " . count($pool) . "\n";
+        // echo $gametype . "\n";
+        // $user = User::find($userId);
+        // echo $userId . "\n";
+        // echo $user->fullName() . "\n";
+        // var_dump($user->with('ratings'));
+    }
+
+    public function handleFindCancel($from, $data)
+    {
     }
 
     public function onClose(ConnectionInterface $conn)

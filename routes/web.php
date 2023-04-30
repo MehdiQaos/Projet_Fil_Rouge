@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\gameController;
+use App\Http\Controllers\playController;
 use App\Http\Controllers\UserController;
 use App\Models\Game;
 use Illuminate\Support\Facades\Route;
@@ -16,35 +18,24 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('custom');
-})->name('home')->middleware('auth');
+Route::view('/', 'welcome')->middleware('guest');
 
-Route::get('/custom', function () {
-    return view('custom');
-})->middleware('auth');
-
-Route::get('/pgn', function () {
-    return view('pgnview');
-})->middleware('auth');
-
-Route::get('/games', function () {
-    return view('mygames');
-})->middleware('auth');
-
-Route::get('/games/{game}', function(Game $game) {
-    return view('mygame', [
-        'game' => $game,
-    ]);
+Route::middleware('auth')->group(function() {
+    Route::view('/home', 'home')->name('home'); 
+    Route::view('/games', 'mygames');
+    Route::view('/profile', 'users.profile');
+    Route::get('/games/{game}', [gameController::class, 'view']);
+    Route::get('/custom', [playController::class, 'custom']);
+    Route::get('/find', [playController::class, 'find']);
 });
 
-Route::get('/find', function(Game $game) {
-    return view('find');
-})->middleware('auth');
+Route::get('/guest', [playController::class, 'guest']);
 
 // auth
 Route::get('/login', [UserController::class, 'login'])->name('login')->middleware('guest');
 Route::get('/register', [UserController::class, 'create'])->middleware('guest');
 Route::post('/users', [AuthController::class, 'store']);
+Route::post('/users/profile', [UserController::class, 'update']);
+Route::post('/users/password', [UserController::class, 'password']);
 Route::get('/logout', [AuthController::class, 'logout'])->middleware('auth');
 Route::post('/users/authenticate', [AuthController::class, 'authenticate']);
