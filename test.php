@@ -1,33 +1,41 @@
 <?php
 
-$l = [1, 2, 3, 4];
+$l = [
+    'a' => 1,
+    'b' => 2,
+    'c' => 3,
+];
+
+print_r($l);
+unset($l['b']);
+print_r($l);
 
 // $t = ['a' => 10];
 
 // echo array_key_exists('b', $t);
 
-$tab = [5,1,2,3,4,1,2,1,2,3,4];
+// $tab = [5,1,2,3,4,1,2,1,2,3,4];
 
-for ($i = 0; $i < count($tab)-1; $i++) {
-    // $k = $i;
-    for ($j = 1; $j < count($tab); $j++) {
-        // if ($tab[$j] < $tab[$k])
-        //     $k = $j;
-        if ($tab[$j] < $tab[$i]) {
-            $temp = $tab[$i];
-            $tab[$i] = $tab[$j];
-            $tab[$j] = $temp;
-        }
-    }
-    // if ($k !== $i) {
-    //     $temp = $tab[$k];
-    //     $tab[$k] = $tab[$i];
-    //     $tab[$i] = $temp;
-    // }
-}
+// for ($i = 0; $i < count($tab)-1; $i++) {
+//     // $k = $i;
+//     for ($j = 1; $j < count($tab); $j++) {
+//         // if ($tab[$j] < $tab[$k])
+//         //     $k = $j;
+//         if ($tab[$j] < $tab[$i]) {
+//             $temp = $tab[$i];
+//             $tab[$i] = $tab[$j];
+//             $tab[$j] = $temp;
+//         }
+//     }
+//     // if ($k !== $i) {
+//     //     $temp = $tab[$k];
+//     //     $tab[$k] = $tab[$i];
+//     //     $tab[$i] = $temp;
+//     // }
+// }
 
-for ($i = 0; $i < count($tab); $i++)
-    echo $tab[$i] . "\n";
+// for ($i = 0; $i < count($tab); $i++)
+//     echo $tab[$i] . "\n";
 
 // echo "{count($tab)}\n";
 

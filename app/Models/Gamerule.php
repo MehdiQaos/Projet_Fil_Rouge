@@ -11,6 +11,7 @@ class Gamerule extends Model
 
     protected $fillable = [
         'length',
+        'name',
         'move_addtime_type',
         'move_addtime',
         'gametype_id',

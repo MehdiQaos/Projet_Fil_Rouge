@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Game;
 use App\Models\Gamerule;
 use App\Models\Gametype;
 use App\Models\User;
@@ -11,7 +12,7 @@ use Ratchet\MessageComponentInterface;
 
 class ChessServerController extends Controller implements MessageComponentInterface
 {
-    protected $connections;
+    // protected $connections;
     private $players;
     private $games;
     private $rankedPools;
@@ -21,7 +22,7 @@ class ChessServerController extends Controller implements MessageComponentInterf
     public function __construct()
     {
         $this->gameRules = Gamerule::all();
-        $this->connections = new \SplObjectStorage;
+        // $this->connections = new \SplObjectStorage;
         $this->players = [];
         $this->games = [];
         $this->rankedPools = [];
@@ -46,17 +47,24 @@ class ChessServerController extends Controller implements MessageComponentInterf
     public function onOpen(ConnectionInterface $conn)
     {
         echo "New connection! ({$conn->resourceId})\n";
-        $this->connections->attach($conn);
+        // $this->connections->attach($conn);
     }
 
-    private function newGame($player1 = null, $player2 = null, $ranked)
+    private function newGame($player1 = null, $player2 = null, $gameRuleId, $ranked)
     {
+        $gameRule = Gamerule::find($gameRuleId);
         $gameId = uniqid('game_');
         $game = [
             'player1' => $player1,
             'player2' => $player2,
             'player1score' => 0,
             'player2score' => 0,
+            'gameRuleId' => $gameRuleId,
+            'gameRules' => [
+                'length' => $gameRule->length,
+                'addTimeType' => $gameRule->move_addtime_type,
+                'addTime' => $gameRule->move_addtime,
+            ],
             'ranked' => $ranked,
         ];
         $this->games[$gameId] = $game;
@@ -109,7 +117,32 @@ class ChessServerController extends Controller implements MessageComponentInterf
             case 'rematch':
                 $this->handleGameRematch($from, $data->data);
                 break;
+            case 'result':
+                $this->handleGameResult($from, $data->data);
+                break;
         }
+    }
+
+    private function handleGameResult($from, $data)
+    {
+        $gameId = $data->gameId;
+        $result = $data->result;
+        $pgn = $data->pgn;
+        $game = &$this->games[$gameId]; // remove &
+        $player1 = $this->players[$from->resourceId];
+        $player2 = $game['player1']['connection']->resourceId === $player1['connection']->resourceId?
+                   $game['player2']:
+                   $game['player1'];
+
+        Game::create([
+            'white_player_id' => $player1['userId'],
+            'black_player_id' => $player2['userId'],
+            'gamerule_id' => $game['gameRuleId'],
+            'result' => $result,
+            'pgn' => $pgn,
+            'date' => now(),
+        ]);
+        // echo $data->result . "\n" . $data->gameId . "\n";
     }
 
     private function handleGameTakeBack($from, $data)
@@ -178,17 +211,23 @@ class ChessServerController extends Controller implements MessageComponentInterf
 
     private function handleConnect($from, $data)
     {
-        $id = $from->resourceId;
         $player = [
             'connection' => $from,
-            'info' => $data,
+            'registred' => $data->registred,
+            'userName' => $data->userName,
         ];
-        $this->players[$id] = $player;
+        if ($data->registred) {
+            $player['userId'] = $data->userId;
+        }
+        $id = $from->resourceId;
+        if (array_key_exists($id, $this->players))
+            return;
+        $this->players[$from->resourceId] = $player;
         $from->send(json_encode([
             'type' => 'connect',
             'data' => [
                 'status' => 'success',
-                'id' => $id,
+                'playerId' => $id,
             ],
         ]));
     }
@@ -211,8 +250,9 @@ class ChessServerController extends Controller implements MessageComponentInterf
     private function handleCustomJoin($from, $data)
     {
         $gameId = $data->gameId;
+        $id = $from->resourceId;
         $game = &$this->games[$gameId]; //arrays in php are passed to functions by lazy copy, copy-on-write
-        $game['player2'] = $this->players[$from->resourceId];
+        $game['player2'] = $this->players[$id];
 
         $game['player1']['connection']->send(json_encode([
             'type' => 'custom',
@@ -220,7 +260,10 @@ class ChessServerController extends Controller implements MessageComponentInterf
                 'type' => 'ready',
                 'data' => [
                     'color' => 'white',
-                    'opponent' => $game['player2']['info'],
+                    'gameRules' => $game['gameRules'],
+                    'opponent' => [
+                        'userName' => $game['player2']['userName'],
+                    ],
                 ],
             ],
         ]));
@@ -231,7 +274,10 @@ class ChessServerController extends Controller implements MessageComponentInterf
                 'type' => 'ready',
                 'data' => [
                     'color' => 'black',
-                    'opponent' => $game['player1']['info'],
+                    'gameRules' => $game['gameRules'],
+                    'opponent' => [
+                        'userName' => $game['player1']['userName'],
+                    ],
                 ],
             ],
         ]));
@@ -239,8 +285,10 @@ class ChessServerController extends Controller implements MessageComponentInterf
 
     private function handleCustomCreate($from, $data)
     {
-        $player1 = $this->players[$from->resourceId];
-        $newGameId = $this->newGame($player1, null, true);
+        $id = $from->resourceId;
+        $player1 = $this->players[$id];
+        $gameRuleId = $data->gameRuleId;
+        $newGameId = $this->newGame($player1, null, $gameRuleId, false);
         $payLoad = [
             'type' => 'custom',
             'data' => [
@@ -313,9 +361,16 @@ class ChessServerController extends Controller implements MessageComponentInterf
     {
     }
 
+    public function handleClose($conn)
+    {
+
+    }
+
     public function onClose(ConnectionInterface $conn)
     {
-        $this->connections->detach($conn);
+        // $this->connections->detach($conn);
+        unset($this->players[$conn->resourceId]);
+        $this->handleClose($conn);
         echo "Connection {$conn->resourceId} has disconnected\n";
     }
 

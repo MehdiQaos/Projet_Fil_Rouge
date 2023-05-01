@@ -8,7 +8,7 @@ class playController extends Controller
 {
     public function custom()
     {
-        return view('play', [
+        return view('custom', [
             'type' => 'custom',
             'user' => auth()->user(),
         ]);
