@@ -58,6 +58,11 @@ class User extends Authenticatable
         return $this->ratings->where('gametype_id', $gameTypeId)->first()->rating;
     }
 
+    public function ratingObject($gameTypeId)
+    {
+        return $this->ratings->where('gametype_id', $gameTypeId)->first();
+    }
+
     public function whiteGames()
     {
         return $this->hasMany(Game::class, 'white_player_id');

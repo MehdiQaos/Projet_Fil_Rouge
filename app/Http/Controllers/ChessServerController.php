@@ -16,38 +16,26 @@ class ChessServerController extends Controller implements MessageComponentInterf
     private $players;
     private $games;
     private $rankedPools;
-    private $guestsPools;
     private $gameRules;
 
     public function __construct()
     {
         $this->gameRules = Gamerule::all();
-        // $this->connections = new \SplObjectStorage;
         $this->players = [];
         $this->games = [];
         $this->rankedPools = [];
         foreach ($this->gameRules as $gameRule) {
             $this->rankedPools[$gameRule->id] = [];
         }
-        $this->guestsPools = [];
-        foreach ($this->gameRules as $gameRule) {
-            $this->guestsPools[$gameRule->id] = [];
-        }
-
-        // for ($i = 0; $i < count($this->gameRules); $i++) {
-        //     $this->pools[]
-        // }
-        // $this->pools = [];
 
         echo "listening on port 8090..\n";
-        echo "ranked pools count: " . count($this->rankedPools) . "\n";
-        echo "guests pools count: " . count($this->guestsPools) . "\n";
+        // echo "ranked pools count: " . count($this->rankedPools) . "\n";
+        // echo "guests pools count: " . count($this->guestsPools) . "\n";
     }
 
     public function onOpen(ConnectionInterface $conn)
     {
         echo "New connection! ({$conn->resourceId})\n";
-        // $this->connections->attach($conn);
     }
 
     private function newGame($player1 = null, $player2 = null, $gameRuleId, $ranked)
@@ -66,13 +54,9 @@ class ChessServerController extends Controller implements MessageComponentInterf
                 'addTime' => $gameRule->move_addtime,
             ],
             'ranked' => $ranked,
+            'saved' => false,
         ];
         $this->games[$gameId] = $game;
-
-        // if (!is_null($player1))
-        //     $player1['gameId'] = $gameId;
-        // if (!is_null($player2))
-        //     $player2['gameId'] = $gameId;
 
         return $gameId;
     }
@@ -127,21 +111,74 @@ class ChessServerController extends Controller implements MessageComponentInterf
         $gameId = $data->gameId;
         $result = $data->result;
         $pgn = $data->pgn;
+        $color = $data->color;
         $game = &$this->games[$gameId]; // remove &
+        if ($game['saved'])
+            return;
         $player1 = $this->players[$from->resourceId];
         $player2 = $game['player1']['connection']->resourceId === $player1['connection']->resourceId?
                    $game['player2']:
                    $game['player1'];
+        
+        if ($color === 'black') {
+            $temp = &$player1;
+            $player1 = &$player2;
+            $player2 = &$temp;
+        } 
 
-        Game::create([
-            'white_player_id' => $player1['userId'],
-            'black_player_id' => $player2['userId'],
-            'gamerule_id' => $game['gameRuleId'],
-            'result' => $result,
-            'pgn' => $pgn,
-            'date' => now(),
-        ]);
-        // echo $data->result . "\n" . $data->gameId . "\n";
+        $gameRuleId = $game['gameRuleId'];
+
+        if ($game['ranked']) {
+            echo "saving game\n";
+            Game::create([
+                'white_player_id' => $player1['userId'],
+                'black_player_id' => $player2['userId'],
+                'gamerule_id' => $gameRuleId,
+                'result' => $result,
+                'pgn' => $pgn,
+                'date' => now(),
+            ]);
+            $game['saved'] = true;
+
+            $this->updateRatings($player1['userId'], $player2['userId'], $gameRuleId, $result);
+        }
+    }
+
+    private function updateRatings($player1Id, $player2Id, $gameRuleId, $result) 
+    {
+        $K = 32;
+        if ($result === '1-0') {
+            $W1 = 1;
+            $W2 = 0;
+        } else if ($result === '0-1') {
+            $W1 = 0;
+            $W2 = 1;
+        } else {
+            $W1 = 0.5;
+            $W2 = 0.5;
+        }
+        
+        $gameTypeId = Gamerule::find($gameRuleId)->gametype_id;
+        $p1Rating = User::find($player1Id)->ratingObject($gameTypeId);
+        $p2Rating = User::find($player2Id)->ratingObject($gameTypeId);
+
+        $p1OldRating = $p1Rating->rating;
+        $p2OldRating = $p2Rating->rating;
+
+        $Ep1 = 1 / (1 + pow(10, ($p2OldRating - $p1OldRating) / 4000));
+        $Ep2 = 1 / (1 + pow(10, ($p1OldRating - $p2OldRating) / 4000));
+
+        $p1NewRating = $p1Rating->rating + $K * ($W1 - $Ep1);
+        $p2NewRating = $p2Rating->rating + $K * ($W2 - $Ep2);
+
+        $p1Rating->rating = (int) $p1NewRating;
+        $p2Rating->rating = (int) $p2NewRating;
+
+        $p1Rating->save();
+        $p2Rating->save();
+
+        echo "new player ($player1Id) rating: {$p1Rating->rating} old: $p1OldRating\n";
+        echo "new player ($player2Id) rating: {$p2Rating->rating} old: $p2OldRating\n";
     }
 
     private function handleGameTakeBack($from, $data)
@@ -157,6 +194,12 @@ class ChessServerController extends Controller implements MessageComponentInterf
 
     private function handleGameRematch($from, $data)
     {
+        if ($data->type === 'newgame') {
+            $gameId = $data->gameId;
+            $game = &$this->games[$gameId];
+            $game['saved'] = false;
+            return;
+        }
         $this->sendToOtherPlayer($from, $data->data->gameId, [
             'type' => 'game',
             'data' => [
@@ -262,34 +305,6 @@ class ChessServerController extends Controller implements MessageComponentInterf
         shuffle($players);
         $this->sendPlayerReadyGameInfos($players[0], $players[1], 'white', 'custom', $game['gameRules'], $gameId);
         $this->sendPlayerReadyGameInfos($players[1], $players[0], 'black', 'custom', $game['gameRules'], $gameId);
-
-        // $game['player1']['connection']->send(json_encode([
-        //     'type' => 'custom',
-        //     'data' => [
-        //         'type' => 'ready',
-        //         'data' => [
-        //             'color' => 'white',
-        //             'gameRules' => $game['gameRules'],
-        //             'opponent' => [
-        //                 'userName' => $game['player2']['userName'],
-        //             ],
-        //         ],
-        //     ],
-        // ]));
-
-        // $game['player2']['connection']->send(json_encode([
-        //     'type' => 'custom',
-        //     'data' => [
-        //         'type' => 'ready',
-        //         'data' => [
-        //             'color' => 'black',
-        //             'gameRules' => $game['gameRules'],
-        //             'opponent' => [
-        //                 'userName' => $game['player1']['userName'],
-        //             ],
-        //         ],
-        //     ],
-        // ]));
     }
 
     private function sendPlayerReadyGameInfos($player, $opponent, $color, $type, $gameRules, $gameId)
@@ -315,7 +330,7 @@ class ChessServerController extends Controller implements MessageComponentInterf
         $id = $from->resourceId;
         $player1 = &$this->players[$id];
         $gameRuleId = $data->gameRuleId;
-        $newGameId = $this->newGame($player1, null, $gameRuleId, false);
+        $newGameId = $this->newGame($player1, null, $gameRuleId, true);
         $player1['game'] = $newGameId;
         $payLoad = [
             'type' => 'custom',
@@ -343,26 +358,6 @@ class ChessServerController extends Controller implements MessageComponentInterf
                 $this->handleFindCancel($from, $data->data);
                 break;
         }
-
-        // this just old shit not working
-
-        // $playerId = $data->playerId;
-        // if (count($this->pool) === 0) {
-        //     $this->pool[] = $playerId;
-        // } else {
-        //     $player1 = $this->players[$playerId];
-        //     $player2Id = array_pop($this->pool);
-        //     $player2 = $this->players[$player2Id];
-        //     $newGameId = $this->newGame($player1, $player2);
-        //     $payLoad = [
-        //         'type' => 'find',
-        //         'data' => [
-        //             'gameId' => $newGameId,
-        //             'color' => 'white',
-        //             'opponent' => $player2Id,
-        //         ],
-        //     ];
-        // }
     }
 
     public function handleFindWaiting($from, $data)
@@ -498,16 +493,9 @@ class ChessServerController extends Controller implements MessageComponentInterf
         }
     }
 
-    public function handleClose($conn)
-    {
-
-    }
-
     public function onClose(ConnectionInterface $conn)
     {
-        // $this->connections->detach($conn);
         unset($this->players[$conn->resourceId]);
-        $this->handleClose($conn);
         echo "Connection {$conn->resourceId} has disconnected\n";
     }
 

@@ -41,9 +41,9 @@ class Game extends Model
     public function winnerColor()
     {
         if ($this->result === '1-0')
-            return 'WHITE';
+            return 'white';
         else if ($this->result === '0-1')
-            return 'BLACK';
+            return 'black';
         else
             return null;
     }

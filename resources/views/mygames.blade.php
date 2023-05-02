@@ -9,7 +9,7 @@
         @if (count($games) == 0)
             <h1>no games</h1>
         @else
-        <table class="table">
+        <table class="table table-light table-striped table-hover">
             <thead>
                 <tr>
                     <th scope="col">#</th>
@@ -20,7 +20,7 @@
                     <th scope="col">date</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="table-group-divider">
                 @foreach ($games as $game)
                     <tr>
                         <th scope="row">{{ $loop->iteration }}</th>

@@ -223,6 +223,16 @@ offerRematchBtn.addEventListener("click", () => {
 
 acceptRematchBtn.addEventListener("click", () => {
     f("rematch", "accept");
+    sendData(conn, {
+        type: "game",
+        data: {
+            type: "rematch",
+            data: {
+                type: "newgame",
+                gameId: currentGameId,
+            },
+        },
+    });
     startRematch();
 });
 
@@ -670,9 +680,11 @@ function handleIfGameOver() {
 function sendResultToServer(p1, p2) {
     let result;
     if (p1 === 1) {
-        result = "1-0";
+        if (playerColor === "black") result = "0-1";
+        else result = "1-0";
     } else if (p2 === 1) {
-        result = "0-1";
+        if (playerColor === "black") result = "1-0";
+        else result = "0-1";
     } else {
         result = "1/2-1/2";
     }
@@ -683,6 +695,7 @@ function sendResultToServer(p1, p2) {
             type: "result",
             data: {
                 result,
+                color: playerColor,
                 gameId: currentGameId,
                 pgn: game.pgn(),
             },
@@ -708,9 +721,7 @@ function setResult(r, p1, p2) {
     opponentScoreNode.innerText = player2Score;
     playing = false;
 
-    if (playerColor == "white") {
-        sendResultToServer(p1, p2);
-    }
+    sendResultToServer(p1, p2);
 }
 
 function toggleTimer() {

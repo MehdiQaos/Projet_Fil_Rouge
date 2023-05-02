@@ -1,28 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="{{ asset('assets/css/chessboard-1.0.0.css') }} " />
-    <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.css') }}">
-    <script src="{{ asset('assets/js/bootstrap.bundle.js') }}"></script>
-    <script src="{{ asset('assets/js/jquery-1.12.4.js') }}"></script>
-    <script src="{{ asset('assets/js/chessboard-1.0.0.js') }}"></script>
-    <script src="{{ asset('assets/js/chess.0.10.3.js') }}"></script>
-    <title>Document</title>
-</head>
-<body>
-    <div class="container p-3">
+<style>
+    .span {
+        padding: 2px;
+    }
+    .selected-span {
+        background-color: black;
+        color: white;
+    }
+</style>
+<x-menu.layout>
+    <x-menu.sidebar/>
+    <div id="page-content-wrapper">
+    <x-menu.navbar/>
+    <div class="container">
         <div class="row">
-            <div class="col-7">
+            <div class="col col-lg-5">
                 <div id="myBoard" style="width: 100%"></div>
             </div>
-            <div class="col-5">
-                <div class="border border-primary border-3 rounded-4 p-3">
+            <div class="col col-lg-5 my-auto">
+                <div>
+                    <div class="bg-light m-0 d-flex rounded-top rounded-1">
+                        <span class="fw-bolder mt-0 me-2 fs-1 border border-2 " id="opponent-score">{{ $opponentScore }}</span>
+                        <span class="fs-3 mx-auto my-auto fst-italic" id="opponent-name">{{ $opponentName }}</span>
+                    </div>
+                </div>
+                <div class="border border-secondary border-2 rounded-1 p-3 bg-light">
                     <p id="history" class="fs-6"></p>
-                <button class="btn btn-primary" id="prev">prev</button>
-                <button class="btn btn-primary" id="next">next</button>
+                    <button class="btn btn-secondary" id="prev">prev</button>
+                    <button class="btn btn-secondary" id="next">next</button>
+                </div>
+                <div>
+                    <div class="bg-light m-0 d-flex rounded-top rounded-1">
+                        <span class="fw-bolder mt-0 me-2 fs-1 border border-2 " id="user-score">{{ $userScore }}</span>
+                        <span class="fs-3 mx-auto my-auto fst-italic" id="user-name">{{ $userName }}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -33,7 +43,9 @@
     </div>
     <script>
         const pgn = "{{ $game->pgn }}";
+        let orientation = '{{ $orientation }}';
     </script>
     <script defer src="{{ asset('assets/js/pgnview.js') }}"></script>
-</body>
-</html>
+    <script src="{{ asset('assets/js/chess.0.10.3.js') }}"></script>
+    <script src="{{ asset('assets/js/chessboard-1.0.0.js') }}"></script>
+</x-menu.layout>

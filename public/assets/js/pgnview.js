@@ -18,9 +18,14 @@ let i = 0;
 const history = document.getElementById("history");
 h.forEach((e, j) => {
     const span = document.createElement("span");
+    span.classList.add("span");
     span.innerText =
         (j % 2 ? "-" : `${Math.floor(j / 2 + 1)}.`) + e + (j % 2 ? " " : "");
-    span.addEventListener("click", () => {
+    span.addEventListener("click", (e) => {
+        // document
+        //     .querySelectorAll(".span")
+        //     .forEach((s) => s.classList.remove("selected-span"));
+        // e.target.classList.add("selected-span");
         let k = j - i + 1;
         if (k > 0) jumpAheadBy(k);
         else if (k < 0) jumpBehindBy(k);
@@ -49,6 +54,7 @@ function jumpBehindBy(i) {
 }
 
 const config = {
+    orientation,
     appearSpeed: 100,
     moveSpeed: 100,
     snapbackSpeed: 100,
@@ -72,6 +78,14 @@ function updateBoard() {
 
 function nextMove() {
     if (i < h.length) {
+        if (i === 0) {
+            document.querySelector(".span").classList.add("selected-span");
+        } else {
+            let s1 = document.querySelector(".selected-span");
+            let s2 = s1.nextElementSibling;
+            s1.classList.remove("selected-span");
+            s2.classList.add("selected-span");
+        }
         game.move(h[i]);
         i++;
         return true;
@@ -80,7 +94,11 @@ function nextMove() {
 }
 
 function prevMove() {
-    if (i > 0) {
+    if (i > 1) {
+        let s1 = document.querySelector(".selected-span");
+        let s2 = s1.previousElementSibling;
+        s1.classList.remove("selected-span");
+        s2.classList.add("selected-span");
         game.undo();
         --i;
         return true;
