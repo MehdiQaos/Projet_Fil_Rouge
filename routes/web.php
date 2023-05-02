@@ -21,15 +21,18 @@ use Illuminate\Support\Facades\Route;
 Route::view('/', 'welcome')->middleware('guest');
 
 Route::middleware('auth')->group(function() {
-    Route::view('/home', 'home')->name('home'); 
+    Route::redirect('/home', '/custom');
     Route::view('/games', 'mygames');
     Route::view('/profile', 'users.profile');
     Route::get('/games/{game}', [gameController::class, 'view']);
-    Route::get('/custom', [playController::class, 'custom']);
+    Route::get('/custom', [playController::class, 'custom'])->name('home');
     Route::get('/find', [playController::class, 'find']);
 });
 
-Route::get('/guest', [playController::class, 'guest']);
+Route::get('/users', [UserController::class, 'users'])->middleware('admin');
+Route::post('/users/{user}/delete', [UserController::class, 'delete']);
+
+Route::view('/guest', 'guest')->middleware('guest');
 
 // auth
 Route::get('/login', [UserController::class, 'login'])->name('login')->middleware('guest');

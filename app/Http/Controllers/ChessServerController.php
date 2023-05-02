@@ -330,7 +330,11 @@ class ChessServerController extends Controller implements MessageComponentInterf
         $id = $from->resourceId;
         $player1 = &$this->players[$id];
         $gameRuleId = $data->gameRuleId;
-        $newGameId = $this->newGame($player1, null, $gameRuleId, true);
+        if ($player1['registred'])
+            $ranked = true;
+        else
+            $ranked = false;
+        $newGameId = $this->newGame($player1, null, $gameRuleId, $ranked);
         $player1['game'] = $newGameId;
         $payLoad = [
             'type' => 'custom',

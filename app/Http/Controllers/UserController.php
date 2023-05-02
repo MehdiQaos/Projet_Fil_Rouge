@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Gametype;
+use App\Models\Rating;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -46,5 +48,19 @@ class UserController extends Controller
             'password' => $password
         ]);
         return redirect('/profile')->with('message', 'Profile updated successfully');
+    }
+
+    public function users()
+    {
+        $users = User::all();
+        return view('users', [
+            'users' => $users,
+        ]);
+    }
+
+    public function delete(User $user)
+    {
+        $user->delete();
+        return redirect('/users');
     }
 }

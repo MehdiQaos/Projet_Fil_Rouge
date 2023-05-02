@@ -20,10 +20,4 @@ class playController extends Controller
             'user' => auth()->user(),
         ]);
     }
-
-    public function guest()
-    {
-        return view('play', [
-        ]);
-    }
 }

@@ -2,7 +2,7 @@
     use App\Models\GameRule;
 @endphp
 <x-menu.layout>
-        <x-menu.sidebar/>
+    <x-menu.sidebar/>
     <div id="page-content-wrapper">
         <x-menu.navbar/>
         <div class="container-fluid">
@@ -45,7 +45,7 @@
                     </div>
                     <div id="result" class="alert alert-info"><b>You won</b></div>
                 </div>
-                <div id="create-game-section" class="col col-md-5 mt-2 me-auto">
+                <div id="create-game-section" class="col col-md-5 mt-2 me-auto" hidden>
                     <div class="row mb-2">
                         <select id="game-rule-select" class="form-select mb-2" required>
                             <option value="" selected>Choose type of game</option>
@@ -61,19 +61,22 @@
                         <button class="btn btn-secondary mx-auto" id="joinGameBtn">join game</button>
                     </form>
                 </div>
+                <div id="connect-section" class="col col-md-5 my-auto me-auto">
+                    <div class="row mb-2">
+                        <input class="form-control mb-2" id="nameInput" type="text" placeholder="Enter your name">
+                        <button class="btn btn-secondary mx-auto" id="connectBtn">connect</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        const guest = false;
-        const pageType = '{{ $type }}';
-        const userId = {{ $user->id }};
-        const userName = '{{ $user->user_name }}';
+        const guest = true;
     </script>
     <script src="{{ asset('assets/js/chess.0.10.3.js') }}"></script>
     <script src="{{ asset('assets/js/chessboard-1.0.0.js') }}"></script>
-    <script defer src="{{ asset('assets/js/custom.js') }}"></script>
+    <script defer src="{{ asset('assets/js/guest.js') }}"></script>
     {{-- draw modal --}}
     <div class="modal" id="mymodal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="takebackmodalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-sm">

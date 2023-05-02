@@ -46,14 +46,14 @@ class UserFactory extends Factory
     public function makePleb()
     {
         return $this->state(fn (array $attributes) => [
-            'role_id' => 2,
+            'role_id' => 1,
         ]);
     }
 
     public function makeAdmin()
     {
         return $this->state(fn (array $attributes) => [
-            'role_id' => 1,
+            'role_id' => 2,
         ]);
     }
 }

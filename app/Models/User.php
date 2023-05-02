@@ -49,6 +49,11 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
+    public function isAdmin()
+    {
+        return $this->role->id === 2;
+    }
+
     public function ratings() {
         return $this->hasMany(Rating::class);
     }

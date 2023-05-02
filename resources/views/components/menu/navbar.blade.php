@@ -26,11 +26,12 @@
                     @endauth
                     {{-- piq --}}
                 </a>
+                @auth
                 <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    {{-- <li><a class="dropdown-item" href="/users/{{auth()->id()}}/edit">Profile</a></li> --}}
                     <li><a class="dropdown-item" href="/profile">Profile</a></li>
                     <li><a class="dropdown-item" href="/logout">Logout</a></li>
                 </ul>
+                @endauth
             </li>
         </ul>
     </div>
