@@ -365,26 +365,79 @@ class ChessServerController extends Controller implements MessageComponentInterf
         // }
     }
 
-    public function makeGame(&$player1, &$player2)
-    {
-        echo "player1: {$player1['userId']}\n";
-        echo "player2: {$player2['userId']}\n";
-
-        $player1['allowedEloDiff'] = 6000;
-        $player2['allowedEloDiff'] = 6000;
-    }
-
     public function handleFindWaiting($from, $data)
     {
+        $resourceId = $from->resourceId;
+        $player = &$this->players[$resourceId];
+        $allowedEloDiff = $player['allowedEloDiff'];
+        $userId = $player['userId'];
+        $gameRuleId = $data->gameRuleId;
+        $gametypeId = Gamerule::find($gameRuleId)->gameType->id;
+        $rating = User::find($userId)->rating($gametypeId);
+        $pool = &$this->rankedPools[$gameRuleId];
+
         echo "reminder received from {$from->resourceId}\n"; 
-        $from->send(json_encode([
-            'type' => 'find', //custom, find
-            'data' => [
-                'type' => 'wait',
+        $foundRating = $this->searchPool($pool, $player, $rating);
+        if (!is_null($foundRating)) {
+            $player2 = $pool[$foundRating];
+            $this->makeGame($player, $player2, $gameRuleId);
+            unset($pool[$foundRating]);
+            unset($pool[$rating]);
+        } else {
+            $player['allowedEloDiff'] += 30;
+            echo "{$this->players[$from->resourceId]['userName']}\n";
+            echo "elo diff: {$this->players[$from->resourceId]['allowedEloDiff']}\n";
+            echo "{$this->rankedPools[$gameRuleId][$rating]['userName']}\n";
+            echo "elo diff: {$this->rankedPools[$gameRuleId][$rating]['allowedEloDiff']}\n";
+
+            $from->send(json_encode([
+                'type' => 'find', //custom, find
                 'data' => [
+                    'type' => 'wait',
+                    'data' => [
+                    ],
                 ],
-            ],
-        ]));
+            ]));
+        }
+    }
+
+    public function searchPool(&$pool, $player, $rating)
+    {
+        $ratings = array_keys($pool);
+        $foundRating = null;
+        $allowedEloDiff = $player['allowedEloDiff'];
+        sort($ratings);
+        foreach($ratings as $rat) {
+            $player2 = &$pool[$rat];
+            $allowedElodiff2 = $player['allowedEloDiff'];
+            $diff = abs($rat - $rating);
+            if ($rat > $rating && $diff > $allowedEloDiff) {
+                break;
+            } else if ($diff <= $allowedEloDiff && $diff <= $allowedElodiff2 && $diff !== 0) {
+                $foundRating = $rat;
+                break;
+            }
+        }
+
+        return $foundRating;
+    }
+
+    public function makeGame(&$player1, &$player2, $gameRuleId)
+    {
+        $gameId = $this->newGame($player1, $player2, $gameRuleId, true);
+        $player1['game'] = $gameId;
+        $player2['game'] = $gameId;
+        $game = $this->games[$gameId];
+
+        $players = [$player1, $player2];
+        shuffle($players);
+        $this->sendPlayerReadyGameInfos($players[0], $players[1], 'white', 'find', $game['gameRules'], $gameId);
+        $this->sendPlayerReadyGameInfos($players[1], $players[0], 'black', 'find', $game['gameRules'], $gameId);
+
+        $player1['game'] = $gameId;
+        $player2['game'] = $gameId;
+        $player1['searching'] = false;
+        $player2['searching'] = false;
     }
 
     public function handleFindNew($from, $data)
@@ -401,33 +454,23 @@ class ChessServerController extends Controller implements MessageComponentInterf
         if (array_key_exists($rating, $pool)) {
 
             $player2 = &$pool[$rating];
-            $gameId = $this->newGame($player, $player2, $gameRuleId, true);
-            $player['game'] = $gameId;
-            $player2['game'] = $gameId;
-            $game = $this->games[$gameId];
+            $this->makeGame($player, $player2, $gameRuleId);
 
-            $players = [$game['player1'], $game['player2']];
-            shuffle($players);
-            $this->sendPlayerReadyGameInfos($players[0], $players[1], 'white', 'find', $game['gameRules'], $gameId);
-            $this->sendPlayerReadyGameInfos($players[1], $players[0], 'black', 'find', $game['gameRules'], $gameId);
-
-            $player['game'] = $gameId;
-            $player2['game'] = $gameId;
             unset($pool[$rating]);
-            $player['searching'] = false;
-            $player2['searching'] = false;
-            echo "pool count " . count($this->rankedPools[$gameRuleId]) . "\n";
 
-
-            // $this->makeGame($player, $player2);
-            // echo "diff player1: " . $this->players[$resourceId]['allowedEloDiff'] . "\n";
-            // echo "diff player1: " . $player2['allowedEloDiff'] . "\n";
         } else if (!$player['searching']) {
-            $pool[$rating] = $player;
+            $pool[$rating] = &$player;
             $player['searching'] = true;
             echo "player {$player['userId']} added to pool\n";
             echo "pool count " . count($this->rankedPools[$gameRuleId]) . "\n";
 
+            $foundRating = $this->searchPool($pool, $player, $rating);
+            if (!is_null($foundRating)) {
+                $player2 = &$pool[$foundRating];
+                $this->makeGame($player, $player2, $gameRuleId);
+                unset($pool[$foundRating]);
+                unset($pool[$rating]);
+            }
             $player['connection']->send(json_encode([
                 'type' => 'find', //custom, find
                 'data' => [
@@ -437,27 +480,6 @@ class ChessServerController extends Controller implements MessageComponentInterf
                 ],
             ]));
         }
-
-
-        // $pool[$userId] = $rating;
-        // foreach ($pool as $id => $r) {
-        //     if (abs($rating - $r) <= $diff) {
-
-        //     }
-        // }
-
-        // if (!array_key_exists($userId, $pool)) {
-        //     echo "nope\n";
-        //     return;
-        // }
-
-        // echo "pool count: " . count($pool) . "\n";
-
-        // echo $gametype . "\n";
-        // $user = User::find($userId);
-        // echo $userId . "\n";
-        // echo $user->fullName() . "\n";
-        // var_dump($user->with('ratings'));
     }
 
     public function handleFindCancel($from, $data)

@@ -210,7 +210,7 @@ offerDrawBtn.addEventListener("click", () => {
 });
 
 acceptDrawBtn.addEventListener("click", () => {
-    if (opponentOfferedDraw) {
+    if (opponentOfferedDraw && playing) {
         f("draw", "accept");
         setResult("Draw", 0.5, 0.5);
         opponentOfferedDraw = false;
