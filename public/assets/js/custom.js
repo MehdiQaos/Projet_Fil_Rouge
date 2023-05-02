@@ -33,7 +33,6 @@ let player2Score = 0;
 
 const gameSection = document.getElementById("game-section");
 const createGameSection = document.getElementById("create-game-section");
-// const findGameSection = document.getElementById("find-game-section");
 const connectBtn = document.getElementById("connectBtn");
 const nameInput = document.getElementById("nameInput");
 const createGameBtn = document.getElementById("createGameBtn");
@@ -62,12 +61,16 @@ const userNameNode = document.getElementById("user-name");
 const opponentNameNode = document.getElementById("opponent-name");
 const userScoreNode = document.getElementById("user-score");
 const opponentScoreNode = document.getElementById("opponent-score");
+const historyTable = document.getElementById("game-history");
+let historyRow = document.createElement("tr");
+const historyLastRow = document.getElementById("history-last-row");
 const mm = new bootstrap.Modal(modal);
 
 const resultNode = document.getElementById("result");
 const gameRuleSelect = document.getElementById("game-rule-select");
 
 showCreateGameSection();
+// showGameSection();
 
 function showGameSection() {
     createGameSection.hidden = true;
@@ -87,6 +90,25 @@ const showRematchOffer = () =>
     showModal("Opponent want rematch", [acceptRematchBtn, declineRematchBtn]);
 const showConfirmResign = () =>
     showModal("Confirm Resign", [confirmResignBtn, cancelModal]);
+
+function updateHistory() {
+    const historyLength = game.history().length;
+    if (historyLength % 2 === 0) {
+        historyRow = document.createElement("tr");
+        historyRow.style.width = "100%";
+        historyRow.innerHTML = `<th scope="row">${Math.floor(
+            historyLength / 2
+        )}</th>`;
+        let el = document.createElement("td");
+        el.innerText = game.history()[historyLength - 2];
+        historyRow.appendChild(el);
+        el = document.createElement("td");
+        el.innerText = game.history()[historyLength - 1];
+        historyRow.appendChild(el);
+        // historyTable.appendChild(historyRow);
+        historyLastRow.before(historyRow);
+    }
+}
 
 function showModal(title, buttons) {
     modalTitle.innerText = title;
@@ -201,7 +223,7 @@ offerRematchBtn.addEventListener("click", () => {
 
 acceptRematchBtn.addEventListener("click", () => {
     f("rematch", "accept");
-    initGame("myBoard", { color: playerColor });
+    startRematch();
 });
 
 declineRematchBtn.addEventListener("click", () => {
@@ -333,6 +355,11 @@ function handleGame(data) {
     }
 }
 
+function startRematch() {
+    color = playerColor === "white" ? "black" : "white";
+    initGame("myBoard", { color });
+}
+
 function handleRematchOffer(data) {
     const type = data.type;
     switch (type) {
@@ -341,14 +368,14 @@ function handleRematchOffer(data) {
             if (playing) return;
             if (rematchOffered) {
                 rematchOffered = false;
-                initGame("myBoard", { color: playerColor });
+                startRematch();
             } else {
                 showRematchOffer();
             }
             break;
         case "accept":
             rematchOffered = false;
-            initGame("myBoard", { color: playerColor });
+            startRematch();
             break;
         case "decline":
             rematchOffered = false;
@@ -482,7 +509,6 @@ function milliToTime(milli) {
     let timeText = "";
     let hours = Math.floor(milli / 3600000);
     if (hours > 0) timeText += String(hours).padStart(2, "0") + ":";
-    // timeText += String(Math.floor(milli / 3600000)).padStart(2, "0") + ":";
     const minutes = String(
         Math.floor((milli - hours * 3600000) / 60000)
     ).padStart(2, "0");
@@ -555,17 +581,18 @@ function initGame(context, data) {
     resignOffered = false;
     takeBackOffered = false;
     rematchOffered = false;
+    [...historyTable.children].forEach((c) => c.remove());
+    historyTable.appendChild(historyLastRow);
 
-    // playerColor = data.color === "white" ? "w" : "b"; //TODO: change to full color name
     playerColor = data.color;
     const config = {
         orientation: data.color,
         draggable: true,
         position: "start",
         pieceTheme: PIECETHEME,
-        onDragStart: onDragStart,
-        onDrop: onDrop,
-        onSnapEnd: onSnapEnd,
+        onDragStart,
+        onDrop,
+        onSnapEnd,
     };
     board = Chessboard(context, config);
     window.addEventListener("resize", board.resize);
@@ -610,17 +637,15 @@ function onDrop(source, target) {
     const r = game.move(move);
 
     if (r === null) return "snapback";
-    else {
-        makeMove(move);
-        toggleTimer();
-    }
 
+    makeMove(move);
+    toggleTimer();
+    updateHistory();
     handleIfGameOver();
 }
 
 function handleIfGameOver() {
     if (game.game_over()) {
-        //TODO: handle timers
         clearInterval(timer1Interval);
         clearInterval(timer2Interval);
         if (game.in_draw()) {
@@ -732,20 +757,21 @@ function handleOpponentMove(data) {
     time2 = data.time1;
     updateBoard();
     toggleTimer();
+    updateHistory();
 
     handleIfGameOver();
 }
 
-// function showControlBtns() {
-//     offerTakeBackBtn.hidden = false;
-//     offerDrawBtn.hidden = false;
-//     resignBtn.hidden = false;
-//     offerRematchBtn.hidden = false;
-// }
+function showControlBtns() {
+    offerTakeBackBtn.hidden = false;
+    offerDrawBtn.hidden = false;
+    resignBtn.hidden = false;
+    offerRematchBtn.hidden = false;
+}
 
-// function hideControlBtns() {
-//     offerTakeBackBtn.hidden = true;
-//     offerDrawBtn.hidden = true;
-//     resignBtn.hidden = true;
-//     offerRematchBtn.hidden = true;
-// }
+function hideControlBtns() {
+    offerTakeBackBtn.hidden = true;
+    offerDrawBtn.hidden = true;
+    resignBtn.hidden = true;
+    offerRematchBtn.hidden = true;
+}

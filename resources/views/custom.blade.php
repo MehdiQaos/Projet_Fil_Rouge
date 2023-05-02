@@ -5,97 +5,47 @@
         <x-menu.sidebar/>
     <div id="page-content-wrapper">
         <x-menu.navbar/>
-        <div class="container">
+        <div class="container-fluid">
             <div class="row">
                 <div id="board-section" class="col col-md-5 ms-auto">
                     <div id="myBoard" style="width: 100%;"></div>
                 </div>
-                <div id="game-section" class="col col-md-5 me-auto" hidden>
-                    <div class="mb-1">
-                        <span class="bg-black p-2 text-light rounded-1" id="opponent-score">0</span>
-                        <div class="d-inline bg-light p-2">
-                            <span class="fs-2 me-3" id="opponent-name">Qaos</span>
-                            <span class="fs-3" id="timer2">05:00</span>
+                <div id="game-section" class="col col-md-5 me-auto my-auto" hidden>
+                {{-- <div id="game-section" class="col col-md-5 me-auto d-flex flex-column justify-content-center" hidden> --}}
+                    <div>
+                        <div class="bg-light m-0 d-flex rounded-top rounded-1">
+                            <span class="fw-bolder mt-0 me-2 fs-1 border border-2 " id="opponent-score">0</span>
+                            <span class="fs-5 me-3 my-auto fst-italic" id="opponent-name">Qaos</span>
+                            <span class="bg-light ms-auto my-auto me-2 fs-3" id="timer2">05:00</span>
                         </div>
                     </div>
-                    <div style="height: 6rem; overflow-y: scroll">
-                        <table class="table table-striped table-hover table-sm table-light" id="game-history">
-                            <tbody>
-                                <tr>
-                                    <th scope="row">1</td>
-                                    <td>d4</td>
-                                    <td>d5</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">2</td>
-                                    <td>c4</td>
-                                    <td>Nf6</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">1</td>
-                                    <td>d4</td>
-                                    <td>d5</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">1</td>
-                                    <td>d4</td>
-                                    <td>d5</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">1</td>
-                                    <td>d4</td>
-                                    <td>d5</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">1</td>
-                                    <td>d4</td>
-                                    <td>d5</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">1</td>
-                                    <td>d4</td>
-                                    <td>d5</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">1</td>
-                                    <td>d4</td>
-                                    <td>d5</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">1</td>
-                                    <td>d4</td>
-                                    <td>d5</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">1</td>
-                                    <td>d4</td>
-                                    <td>d5</td>
+                    <div style="max-height: 6rem; overflow-y: scroll;">
+                        <table class="table table-striped table-hover table-sm table-light">
+                            <tbody id="game-history">
+                                <tr id="history-last-row" style="height: 6rem">
+                                    <th scope="row"></td>
+                                    <td></td>
+                                    <td></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                     <div>
-                        <span class="bg-black p-2 text-light rounded-1" id="user-score">0</span>
-                        <div class="d-inline bg-light p-2">
-                            <span class="fs-2 me-3" id="user-name">Mehdi</span>
-                            <span class="fs-3" id="timer1">05:00</span>
+                        <div class="bg-light m-0 d-flex rounded-bottom rounded-1">
+                            <span class="fw-bolder mt-0 me-2 fs-1 border border-2 " id="user-score">0</span>
+                            <span class="fs-5 me-3 my-auto fst-italic" id="user-name">Mehdi</span>
+                            <span class="bg-light ms-auto my-auto me-2 fs-3" id="timer1">05:00</span>
                         </div>
                     </div>
                     <div class="my-1">
-                        <button title="offer take back" id="takeBackBtn" class="btn btn-lg btn-outline-secondary game-control-btn" hidden><i class="fa-solid fa-rotate-left"></i></button>
-                        <button title="offer draw" id="drawBtn" class="btn btn-lg btn-outline-secondary game-control-btn" hidden><i class="fa-solid fa-arrow-right-arrow-left"></i></button>
-                        <button title="resign" id="resignBtn" class="btn btn-lg btn-outline-secondary game-control-btn" hidden><i class="fa-solid fa-chess-king"></i></button>
-                        <button title="offer rematch" id="offerRematchBtn" class="btn btn-lg btn-outline-secondary game-control-btn" hidden><i class="fa-solid fa-exclamation"></i></button>
+                        <button title="offer take back" id="takeBackBtn" class="btn btn-lg btn-outline-secondary game-control-btn border-2" hidden><i class="fa-solid fa-rotate-left"></i></button>
+                        <button title="offer draw" id="drawBtn" class="btn btn-lg btn-outline-secondary game-control-btn border-2" hidden><i class="fa-solid fa-flag"></i></button>
+                        {{-- <button title="offer draw" id="drawBtn" class="btn btn-lg btn-outline-secondary game-control-btn border-2" hidden><i class="fa-solid fa-arrow-right-arrow-left"></i></button> --}}
+                        <button title="resign" id="resignBtn" class="btn btn-lg btn-outline-secondary game-control-btn border-2" hidden><i class="fa-solid fa-chess-king"></i></button>
+                        <button title="offer rematch" id="offerRematchBtn" class="btn btn-outline-secondary game-control-btn fw-bolder border-2" hidden>REMATCH</button>
+                        {{-- <button title="offer rematch" id="offerRematchBtn" class="btn btn-lg btn-outline-secondary game-control-btn border-2" hidden><i class="fa-solid fa-exclamation"></i></button> --}}
                     </div>
-                    <div id="result" class="alert alert-primary"><b>You won</b></div>
-                    <div class="form-floating">
-                        <textarea readonly class="form-control" placeholder="Leave a comment here" id="chatArea"></textarea>
-                        <label for="floatingTextarea">Chat</label>
-                    </div>
-                    <div class="form-floating">
-                        <textarea readonly class="form-control" placeholder="Leave a comment here" id="chatMessage"></textarea>
-                        <label for="floatingTextarea">message</label>
-                    </div>
+                    <div id="result" class="alert alert-info"><b>You won</b></div>
                 </div>
                 <div id="create-game-section" class="col col-md-5 mt-2 me-auto">
                     <div class="row mb-2">
@@ -105,16 +55,12 @@
                                 <option value="{{ $rule->id }}">{{ $rule->name }}</option>
                             @endforeach
                         </select>
-                        <button class="btn btn-primary mx-auto mb-2" id="createGameBtn">create game</button>
+                        <button class="btn btn-secondary mx-auto mb-2" id="createGameBtn">create game</button>
                         <input id="gameCode" class="form-control col-7 mb-2" type="text" placeholder="" readonly>
                     </div>
-                    {{-- <div class="row mb-2">
-                        <input id="gameCode" class="form-control col-7 mb-2" type="text" placeholder="" readonly>
-                        <button class="btn btn-primary mx-auto" id="createGameBtn" disabled>create game</button>
-                    </div> --}}
                     <form class="row mb-2">
                         <input class="form-control mb-2" id="gameCodeInput" type="text" placeholder="Game id">
-                        <button class="btn btn-primary mx-auto" id="joinGameBtn">join game</button>
+                        <button class="btn btn-secondary mx-auto" id="joinGameBtn">join game</button>
                     </form>
                 </div>
                 {{-- <div id="find-game-section" class="card p-5 m-1" hidden> --}}
@@ -160,14 +106,14 @@
         <h1 class="modal-title fs-5" id="mymodallabel">Modal title</h1>
       </div>
       <div class="modal-footer">
-        <button class="modalBtn" id="acceptDrawBtn" data-bs-dismiss="modal">accept</button>
-        <button class="modalBtn" id="acceptTakeBAckBtn" data-bs-dismiss="modal">accept</button>
-        <button class="modalBtn" id="declineDrawBtn" data-bs-dismiss="modal">decline</button>
-        <button class="modalBtn" id="declineTakeBAckBtn" data-bs-dismiss="modal">decline</button>
-        <button class="modalBtn" id="confirmResignBtn" data-bs-dismiss="modal">Confirm</button>
-        <button class="modalBtn" id="acceptRematchBtn" data-bs-dismiss="modal">Accept</button>
-        <button class="modalBtn" id="declineRematchBtn" data-bs-dismiss="modal">Decline</button>
-        <button class="modalBtn" id="cancelModalBtn" data-bs-dismiss="modal">Cancel</button>
+        <button class="modalBtn btn btn-secondary" id="acceptDrawBtn" data-bs-dismiss="modal">accept</button>
+        <button class="modalBtn btn btn-secondary" id="acceptTakeBAckBtn" data-bs-dismiss="modal">accept</button>
+        <button class="modalBtn btn btn-secondary" id="declineDrawBtn" data-bs-dismiss="modal">decline</button>
+        <button class="modalBtn btn btn-secondary" id="declineTakeBAckBtn" data-bs-dismiss="modal">decline</button>
+        <button class="modalBtn btn btn-danger" id="confirmResignBtn" data-bs-dismiss="modal">Confirm</button>
+        <button class="modalBtn btn btn-secondary" id="acceptRematchBtn" data-bs-dismiss="modal">Accept</button>
+        <button class="modalBtn btn btn-secondary" id="declineRematchBtn" data-bs-dismiss="modal">Decline</button>
+        <button class="modalBtn btn btn-secondary" id="cancelModalBtn" data-bs-dismiss="modal">Cancel</button>
       </div>
     </div>
   </div>

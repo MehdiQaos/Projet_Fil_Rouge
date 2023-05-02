@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -64,16 +63,6 @@ class User extends Authenticatable
         return $this->hasMany(Game::class, 'white_player_id');
     }
 
-    // public function latestWhiteGames()
-    // {
-    //     return $this->hasOne(Game::class, 'white_player_id')->latestOfMany();
-    // }
-
-    // public function latestBlackGames()
-    // {
-    //     return $this->hasOne(Game::class, 'black_player_id')->latestOfMany();
-    // }
-
     public function blackGames()
     {
         return $this->hasMany(Game::class, 'black_player_id');
@@ -88,4 +77,14 @@ class User extends Authenticatable
     {
         return $this->first_name . ' ' . $this->last_name;
     }
+
+    // public function latestWhiteGames()
+    // {
+    //     return $this->hasOne(Game::class, 'white_player_id')->latestOfMany();
+    // }
+
+    // public function latestBlackGames()
+    // {
+    //     return $this->hasOne(Game::class, 'black_player_id')->latestOfMany();
+    // }
 }

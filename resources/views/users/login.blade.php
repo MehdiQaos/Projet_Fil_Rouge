@@ -29,7 +29,7 @@
                 <div class="text-center fw-medium">Don't have an account? <a class="text-black" href="/register"><span class="fw-semibold">Sign up</span></a></div>
                 
                 <div class="row text-center d-flex justify-content-center">
-                    <button type="submit" id="login-button" class="btn p-2 my-0 mt-4 w-25" name="login"><span class="text-light fw-bold">Sign In</span></button>
+                    <button type="submit" id="login-button" class="btn p-2 my-0 mt-4 w-50" name="login"><span class="text-light fw-bold">Sign In</span></button>
                 </div>
             </form>
         </div>

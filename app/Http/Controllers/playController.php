@@ -16,8 +16,7 @@ class playController extends Controller
 
     public function find()
     {
-        return view('play', [
-            'type' => 'find',
+        return view('find', [
             'user' => auth()->user(),
         ]);
     }

@@ -43,8 +43,8 @@ class UserSeeder extends Seeder
 
         $gameTypesIds = Gametype::pluck('id')->toArray();
 
-        $users = User::factory()->makePleb()->count(20)->create();
-        $users->each(function($user) use($gameTypesIds) {
+        User::factory()->makePleb()->count(20)->create();
+        User::all()->each(function($user) use($gameTypesIds) {
             foreach($gameTypesIds as $id) {
                 Rating::create([
                     'user_id' => $user->id,

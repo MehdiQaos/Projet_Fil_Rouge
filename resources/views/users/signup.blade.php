@@ -53,7 +53,7 @@
                 </div>
                 <div class="text-center fw-medium mb-3">Already have an account? <a class="text-black" href="/login"><span class="fw-semibold">Sign in</span></a></div>
                 <div class="row d-flex justify-content-center text-center">
-                    <button type="submit" id="login-button" class="btn p-2 mt-2 w-25" name="signup"><span class="text-light fw-bold">Sign Up</span></button>
+                    <button type="submit" id="login-button" class="btn p-2 mt-2 w-50" name="signup"><span class="text-light fw-bold">Sign Up</span></button>
                 </div>
             </form>
         </div>

@@ -69,6 +69,11 @@ class ChessServerController extends Controller implements MessageComponentInterf
         ];
         $this->games[$gameId] = $game;
 
+        // if (!is_null($player1))
+        //     $player1['gameId'] = $gameId;
+        // if (!is_null($player2))
+        //     $player2['gameId'] = $gameId;
+
         return $gameId;
     }
 
@@ -88,12 +93,6 @@ class ChessServerController extends Controller implements MessageComponentInterf
                 break;
             case 'game':
                 $this->handleGame($from, $data);
-                break;
-            case 'challenge':
-                $this->handleChallenge($from, $data);
-                break;
-            case 'chat':
-                $this->handleChat($from, $data);
                 break;
         }
     }
@@ -215,6 +214,9 @@ class ChessServerController extends Controller implements MessageComponentInterf
             'connection' => $from,
             'registred' => $data->registred,
             'userName' => $data->userName,
+            'searching' => false,
+            'allowedEloDiff' => 50,
+            'game' => null,
         ];
         if ($data->registred) {
             $player['userId'] = $data->userId;
@@ -252,31 +254,56 @@ class ChessServerController extends Controller implements MessageComponentInterf
         $gameId = $data->gameId;
         $id = $from->resourceId;
         $game = &$this->games[$gameId]; //arrays in php are passed to functions by lazy copy, copy-on-write
+        $player = &$this->players[$id];
+        $player['game'] = $gameId;
         $game['player2'] = $this->players[$id];
 
-        $game['player1']['connection']->send(json_encode([
-            'type' => 'custom',
-            'data' => [
-                'type' => 'ready',
-                'data' => [
-                    'color' => 'white',
-                    'gameRules' => $game['gameRules'],
-                    'opponent' => [
-                        'userName' => $game['player2']['userName'],
-                    ],
-                ],
-            ],
-        ]));
+        $players = [$game['player1'], $game['player2']];
+        shuffle($players);
+        $this->sendPlayerReadyGameInfos($players[0], $players[1], 'white', 'custom', $game['gameRules'], $gameId);
+        $this->sendPlayerReadyGameInfos($players[1], $players[0], 'black', 'custom', $game['gameRules'], $gameId);
 
-        $game['player2']['connection']->send(json_encode([
-            'type' => 'custom',
+        // $game['player1']['connection']->send(json_encode([
+        //     'type' => 'custom',
+        //     'data' => [
+        //         'type' => 'ready',
+        //         'data' => [
+        //             'color' => 'white',
+        //             'gameRules' => $game['gameRules'],
+        //             'opponent' => [
+        //                 'userName' => $game['player2']['userName'],
+        //             ],
+        //         ],
+        //     ],
+        // ]));
+
+        // $game['player2']['connection']->send(json_encode([
+        //     'type' => 'custom',
+        //     'data' => [
+        //         'type' => 'ready',
+        //         'data' => [
+        //             'color' => 'black',
+        //             'gameRules' => $game['gameRules'],
+        //             'opponent' => [
+        //                 'userName' => $game['player1']['userName'],
+        //             ],
+        //         ],
+        //     ],
+        // ]));
+    }
+
+    private function sendPlayerReadyGameInfos($player, $opponent, $color, $type, $gameRules, $gameId)
+    {
+        $player['connection']->send(json_encode([
+            'type' => $type, //custom, find
             'data' => [
                 'type' => 'ready',
                 'data' => [
-                    'color' => 'black',
-                    'gameRules' => $game['gameRules'],
+                    'color' => $color,
+                    'gameRules' => $gameRules,
+                    'gameId' => $gameId,
                     'opponent' => [
-                        'userName' => $game['player1']['userName'],
+                        'userName' => $opponent['userName'],
                     ],
                 ],
             ],
@@ -286,9 +313,10 @@ class ChessServerController extends Controller implements MessageComponentInterf
     private function handleCustomCreate($from, $data)
     {
         $id = $from->resourceId;
-        $player1 = $this->players[$id];
+        $player1 = &$this->players[$id];
         $gameRuleId = $data->gameRuleId;
         $newGameId = $this->newGame($player1, null, $gameRuleId, false);
+        $player1['game'] = $newGameId;
         $payLoad = [
             'type' => 'custom',
             'data' => [
@@ -301,17 +329,23 @@ class ChessServerController extends Controller implements MessageComponentInterf
         $from->send(json_encode($payLoad));
     }
 
-    private function handleFind($from, $data) // this just old shit not working
+    private function handleFind($from, $data) 
     {
         $type = $data->type;
         switch ($type) {
             case 'new':
                 $this->handleFindNew($from, $data->data);
                 break;
+            case 'waiting':
+                $this->handleFindWaiting($from, $data->data);
+                break;
             case 'cancel':
                 $this->handleFindCancel($from, $data->data);
                 break;
         }
+
+        // this just old shit not working
+
         // $playerId = $data->playerId;
         // if (count($this->pool) === 0) {
         //     $this->pool[] = $playerId;
@@ -331,25 +365,94 @@ class ChessServerController extends Controller implements MessageComponentInterf
         // }
     }
 
+    public function makeGame(&$player1, &$player2)
+    {
+        echo "player1: {$player1['userId']}\n";
+        echo "player2: {$player2['userId']}\n";
+
+        $player1['allowedEloDiff'] = 6000;
+        $player2['allowedEloDiff'] = 6000;
+    }
+
+    public function handleFindWaiting($from, $data)
+    {
+        echo "reminder received from {$from->resourceId}\n"; 
+        $from->send(json_encode([
+            'type' => 'find', //custom, find
+            'data' => [
+                'type' => 'wait',
+                'data' => [
+                ],
+            ],
+        ]));
+    }
+
     public function handleFindNew($from, $data)
     {
-        $diff = 50;
-        $userId = $data->userId;
+        $resourceId = $from->resourceId;
+        $player = &$this->players[$resourceId];
+        $allowedEloDiff = $player['allowedEloDiff'];
+        $userId = $player['userId'];
         $gameRuleId = $data->gameRuleId;
-        $pool = &$this->rankedPools[$gameRuleId];
         $gametypeId = Gamerule::find($gameRuleId)->gameType->id;
         $rating = User::find($userId)->rating($gametypeId);
-        $pool[$userId] = $rating;
-        foreach ($pool as $id => $r) {
-            if (abs($rating - $r) <= $diff) {
+        $pool = &$this->rankedPools[$gameRuleId];
 
-            }
+        if (array_key_exists($rating, $pool)) {
+
+            $player2 = &$pool[$rating];
+            $gameId = $this->newGame($player, $player2, $gameRuleId, true);
+            $player['game'] = $gameId;
+            $player2['game'] = $gameId;
+            $game = $this->games[$gameId];
+
+            $players = [$game['player1'], $game['player2']];
+            shuffle($players);
+            $this->sendPlayerReadyGameInfos($players[0], $players[1], 'white', 'find', $game['gameRules'], $gameId);
+            $this->sendPlayerReadyGameInfos($players[1], $players[0], 'black', 'find', $game['gameRules'], $gameId);
+
+            $player['game'] = $gameId;
+            $player2['game'] = $gameId;
+            unset($pool[$rating]);
+            $player['searching'] = false;
+            $player2['searching'] = false;
+            echo "pool count " . count($this->rankedPools[$gameRuleId]) . "\n";
+
+
+            // $this->makeGame($player, $player2);
+            // echo "diff player1: " . $this->players[$resourceId]['allowedEloDiff'] . "\n";
+            // echo "diff player1: " . $player2['allowedEloDiff'] . "\n";
+        } else if (!$player['searching']) {
+            $pool[$rating] = $player;
+            $player['searching'] = true;
+            echo "player {$player['userId']} added to pool\n";
+            echo "pool count " . count($this->rankedPools[$gameRuleId]) . "\n";
+
+            $player['connection']->send(json_encode([
+                'type' => 'find', //custom, find
+                'data' => [
+                    'type' => 'wait',
+                    'data' => [
+                    ],
+                ],
+            ]));
         }
+
+
+        // $pool[$userId] = $rating;
+        // foreach ($pool as $id => $r) {
+        //     if (abs($rating - $r) <= $diff) {
+
+        //     }
+        // }
+
         // if (!array_key_exists($userId, $pool)) {
         //     echo "nope\n";
         //     return;
         // }
-        echo "pool count: " . count($pool) . "\n";
+
+        // echo "pool count: " . count($pool) . "\n";
+
         // echo $gametype . "\n";
         // $user = User::find($userId);
         // echo $userId . "\n";
@@ -359,6 +462,18 @@ class ChessServerController extends Controller implements MessageComponentInterf
 
     public function handleFindCancel($from, $data)
     {
+        $resourceId = $from->resourceId;
+        $player = &$this->players[$resourceId];
+        $userId = $player['userId'];
+        $gameRuleId = $data->gameRuleId;
+        $gametypeId = Gamerule::find($gameRuleId)->gameType->id;
+        $rating = User::find($userId)->rating($gametypeId);
+        $pool = &$this->rankedPools[$gameRuleId];
+
+        if ($player['searching']) {
+            $player['searching'] = false;
+            unset($pool[$rating]);
+        }
     }
 
     public function handleClose($conn)
